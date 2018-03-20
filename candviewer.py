@@ -10,6 +10,9 @@ import sys
 import os.path
 import shlex
 import subprocess
+import tempfile
+from time import sleep
+import math
 
 # version info
 __version__ = "$Revision$"
@@ -218,6 +221,111 @@ def output_pulse_plot(t_data):
     result = subprocess.check_call(args)
 
 
+def plot_candidate_dspsr(fil_file, sample, filter, dm, snr, nchan=0, nbin=0,
+length=0):
+    """
+    Plot a candidate using dspsr.
+    """
+
+    # for Lovell telescope
+    samp_time = 0.000256
+
+    if not os.path.isfile(fil_file):
+        raise RuntimeError("Filterbank file does not exist: {0}".format(fil_file))
+
+    # use the absolute path here
+    fil_file = os.path.abspath(fil_file)
+
+    cand_time = samp_time * sample
+
+    cmd = "dmsmear -f 1382 -b 400 -n 1024 -d {0} -q".format(dm)
+    args = shlex.split(cmd)
+    result = subprocess.check_output(args, stderr=subprocess.STDOUT,
+    encoding="ASCII")
+
+    cand_band_smear = float(result.strip())
+    print("plotCandDspsr: cand_band_smear={0}".format(cand_band_smear))
+
+    cand_filter_time = (2 ** filter) * samp_time
+
+    cand_smearing = float(cand_band_smear) + float(cand_filter_time)
+    cand_start_time = cand_time - (0.5 * cand_smearing)
+    cand_tot_time = 2.0 * cand_smearing
+
+    if length != 0:
+        cand_tot_time = length
+
+    # determine the bin width, based on heimdalls filter width
+    if nbin == 0:
+        bin_width = samp_time * (2 ** filter)
+        nbin = int(cand_tot_time / bin_width)
+
+    if nbin < 16:
+        nbin = 16
+
+    if nbin > 1024:
+        nbin = 1024
+
+    cmd = "dspsr " + fil_file + " -S " + str(cand_start_time) + \
+        " -b " + str(nbin) + \
+        " -T " + str(cand_tot_time) + \
+        " -c " + str(cand_tot_time) + \
+        " -D " + str(dm) + \
+        " -U 1" + \
+        " -cepoch start" + \
+        " -q -Q"
+
+    # create a temporary working directory
+    workdir = tempfile.mkdtemp()
+    print("plotCandDspsr: workdir={0}".format(workdir))
+
+    print("plotCandDspsr: {0}".format(cmd))
+    args = shlex.split(cmd)
+    result = subprocess.check_output(args, stderr=subprocess.STDOUT,
+    encoding="ASCII", cwd=workdir)
+
+    archive = result.split("seconds: ")[1]
+    archive = archive.strip()
+    archive = os.path.join(workdir, archive + ".ar")
+    print(archive)
+
+    count = 10 
+    while ((not os.path.exists(archive)) and count > 0):
+        print("plotCandDspsr: archive file does not exist: {0}".format(archive))
+        sleep(1)
+        count = count - 1
+
+    if nchan == 0:
+        # determine number of channels based on SNR
+        nchan = int(round(math.pow(float(snr)/4.0,2)))
+    if nchan < 2:
+        nchan = 2
+
+    nchan_base2 = int(round(math.log(nchan,2)))
+    nchan = math.pow(2,nchan_base2)
+
+    if nchan > 512:
+        nchan = 512
+
+    title = "DM=" + str(dm) + " Length=" + str(cand_filter_time*1000) + \
+            "ms Epoch=" + str(cand_start_time)
+
+    cmd = "psrplot -p freq+ -c above:c='' -c x:unit=ms -j 'F {0:.0f}' -D -/PNG {1}".format(nchan, archive)
+
+    print("plotCandDspsr: {0}".format(cmd))
+    args = shlex.split(cmd)
+    binary_data = subprocess.check_output(args)
+
+    with open("test.png", "wb") as f:
+        f.write(binary_data)
+    
+    if os.path.exists(archive):
+      os.remove(archive)
+    os.rmdir(workdir)
+    
+    return binary_data
+
+
 def signal_handler(signum, frame):
     """
     Handle UNIX signals sent to the programme.
@@ -271,6 +379,9 @@ def main():
     plot_clusters(data, item, args.output)
     plot_candidates(data, item, args.output)
     plot_candidate_timeline(data, item, args.output)
+
+    plot_candidate_dspsr("58182_36871_J2124-3358_000000.fil", 62272,
+    6, 237, 13.36)
 
     print("All done.")
 

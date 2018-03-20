@@ -54,7 +54,8 @@ def load_data(filename):
     temp = np.genfromtxt(filename, dtype=dtype)
     temp = np.atleast_1d(temp)
 
-    dtype = [("cand_file","|U4096"), ("fil_file","|U4096"),
+    dtype = [("cand_file_nr","int"), ("cand_file","|U4096"),
+    ("fil_file_nr","int"), ("fil_file","|U4096"),
     ("total_time","float")]
     new_dtype = dtype_add_fields(temp, dtype)
 
@@ -177,7 +178,7 @@ def plot_candidate_timeline(t_data, filename, output_plots):
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
-    sc = ax.scatter(data["time"], data["dm"]+1,
+    sc = ax.scatter(data["total_time"], data["dm"]+1,
     c=2**data["filter"],
     norm=LogNorm(),
     s=60.0*data["snr"]/np.max(data["snr"]),
@@ -244,7 +245,7 @@ length=0):
     encoding="ASCII")
 
     cand_band_smear = float(result.strip())
-    print("plotCandDspsr: cand_band_smear={0}".format(cand_band_smear))
+    logging.info("cand_band_smear: {0}".format(cand_band_smear))
 
     cand_filter_time = (2 ** filter) * samp_time
 
@@ -275,11 +276,12 @@ length=0):
         " -cepoch start" + \
         " -q -Q"
 
+    logging.info("dspsr cmd: {0}".format(cmd))
+
     # create a temporary working directory
     workdir = tempfile.mkdtemp()
-    print("plotCandDspsr: workdir={0}".format(workdir))
+    logging.info("workdir: {0}".format(workdir))
 
-    print("plotCandDspsr: {0}".format(cmd))
     args = shlex.split(cmd)
     result = subprocess.check_output(args, stderr=subprocess.STDOUT,
     encoding="ASCII", cwd=workdir)
@@ -287,11 +289,11 @@ length=0):
     archive = result.split("seconds: ")[1]
     archive = archive.strip()
     archive = os.path.join(workdir, archive + ".ar")
-    print(archive)
+    logging.debug(archive)
 
     count = 10 
     while ((not os.path.exists(archive)) and count > 0):
-        print("plotCandDspsr: archive file does not exist: {0}".format(archive))
+        logging.warn("Archive file does not exist: {0}".format(archive))
         sleep(1)
         count = count - 1
 
@@ -307,16 +309,14 @@ length=0):
     if nchan > 512:
         nchan = 512
 
-    title = "DM=" + str(dm) + " Length=" + str(cand_filter_time*1000) + \
-            "ms Epoch=" + str(cand_start_time)
-
     cmd = "psrplot -p freq+ -c above:c='' -c x:unit=ms -j 'F {0:.0f}' -D -/PNG {1}".format(nchan, archive)
 
-    print("plotCandDspsr: {0}".format(cmd))
+    logging.info("psrplot cmd: {0}".format(cmd))
     args = shlex.split(cmd)
     binary_data = subprocess.check_output(args)
 
-    with open("test.png", "wb") as f:
+    outfile = os.path.join(".", os.path.basename(archive)[0:-3] + ".png")
+    with open(outfile, "wb") as f:
         f.write(binary_data)
     
     if os.path.exists(archive):
@@ -349,39 +349,64 @@ def main():
 
     # handle command line arguments
     parser = argparse.ArgumentParser(description="View heimdall candidates.")
-    parser.add_argument("files", type=str, nargs="+",
-    help="Candidate files to process.")
+    parser.add_argument("-c", type=str, dest="candfiles", nargs="+",
+    help="Candidate files to process.", required=True)
+    parser.add_argument("-f", type=str, dest="filfiles", nargs="+",
+    help="Filterbank files to process.", required=True)
     parser.add_argument("-o", "--output", action="store_true", dest="output",
     default=False, help="Output plots to file rather than to screen.")
     parser.add_argument("--version", action="version", version=__version__)
     args = parser.parse_args()
 
     # sanity check
-    for item in args.files:
-        if not os.path.isfile(item):
-            logging.error("The file does not exist: {0}".format(item))
-            sys.exit(1)
+    for sel in [args.candfiles, args.filfiles]:
+        for item in sel:
+            if not os.path.isfile(item):
+                logging.error("The file does not exist: {0}".format(item))
+                sys.exit(1)
+
+    candfiles = np.sort(args.candfiles)
+    filfiles = np.sort(args.filfiles)
 
     data = None
-    i = 0
+    icand = 1
+    ifil = 1
 
-    for item in args.files:
+    for item in candfiles:
         print("Processing: {0}".format(item))
         part = load_data(item)
+
+        part["cand_file_nr"] = icand
+        part["cand_file"] = item
+        part["fil_file_nr"] = ifil
+        part["fil_file"] = filfiles[ifil-1]
+        part["total_time"] =  part["time"] + (ifil - 1)*60.0
+
+        if icand % 2 == 0:
+            print("New fil file detected: {0}, {1}".format(ifil, icand))
+            ifil += 1
 
         if data is None:
             data = np.copy(part)
         else:
-            part["time"] += i*60.0
-            i += 1
             data = np.concatenate((data, part))
+
+        icand += 1
     
     plot_clusters(data, item, args.output)
     plot_candidates(data, item, args.output)
     plot_candidate_timeline(data, item, args.output)
 
-    plot_candidate_dspsr("58182_36871_J2124-3358_000000.fil", 62272,
-    6, 237, 13.36)
+    # remove all low-snr candidates and the ones that are really wide
+    good = remove_bad_cands(data)
+    print("Number of good candidates: {0}".format(len(good)))
+
+    for item in good:
+        try:
+            plot_candidate_dspsr(item["fil_file"], item["samp_nr"],
+            item["filter"], item["dm"], item["snr"])
+        except subprocess.CalledProcessError as e:
+            print("An error occurred: {0}".format(str(e)))
 
     print("All done.")
 

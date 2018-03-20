@@ -197,31 +197,6 @@ def plot_candidate_timeline(t_data, filename, output_plots):
     fig.tight_layout()
 
 
-def output_pulse_plot(t_data):
-    """
-    Run dspsr and psrplot to generate pulse plot.
-    """
-
-    data = np.copy(t_data)
-
-    if not len(data) == 1:
-        raise RuntimeError("Please provide a single candidate at a time.")
-
-    telescope = "jb"
-    start = data["start"]
-    end = start + 1.5
-
-    command = "dspsr -S {0} -T {1} -D {2} -O {3} {4}".format(start, end,
-    data["dm"], outfile, data["fil_name"])
-
-    # split into correct tokens for Popen 
-    args = shlex.split(command)
-    logging.debug(args)
-
-    # spawn process
-    result = subprocess.check_call(args)
-
-
 def plot_candidate_dspsr(fil_file, sample, filter, dm, snr, nchan=0, nbin=0,
 length=0):
     """

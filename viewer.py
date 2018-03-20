@@ -8,9 +8,34 @@ import argparse
 import logging
 import sys
 import os.path
+import shlex
+import subprocess
 
 # version info
 __version__ = "$Revision$"
+
+
+def dtype_add_fields(data, dtype):
+    """
+    Add fields to dtype.
+    data is that array where the fields should be added.
+    dtype is a dtype definition of the new fields.
+    Return is a numpy dtype object.
+    """
+
+    dtype = np.dtype(dtype)
+
+    # check that field names are not already there
+    for field in dtype.names:
+        if field in data.dtype.names:
+            logging.error("Field is already there: {0}".format(field))
+            sys.exit(1)
+
+    r = list(data.dtype.descr) + list(dtype.descr)
+
+    r = np.dtype(r)
+
+    return r
 
 
 def load_data(filename):
@@ -23,9 +48,21 @@ def load_data(filename):
             ("dmtrial","int"), ("dm","float"),
             ("n_clusters","int"), ("start","int"), ("end","int")]
 
-    data = np.genfromtxt(filename, dtype=dtype)
+    temp = np.genfromtxt(filename, dtype=dtype)
+    temp = np.atleast_1d(temp)
 
-    data = np.atleast_1d(data)
+    dtype = [("cand_file","|U4096"), ("fil_file","|U4096"),
+    ("total_time","float")]
+    new_dtype = dtype_add_fields(temp, dtype)
+
+    data = np.zeros(len(temp), dtype=new_dtype)
+
+    # fill in
+    for field in data.dtype.names:
+        if field in temp.dtype.names:
+            data[field] = temp[field]
+
+    data["cand_file"] = filename
 
     return data
 
@@ -38,8 +75,8 @@ def remove_bad_cands(t_data):
     data = np.copy(t_data)
 
     # remove all low-snr candidates and the ones that are really wide
-    mask = (data["snr"] > 9.0) & (data["filter"] <= 8) & (data["dm"] > 100) & \
-    (data["n_clusters"] > 4)
+    mask = (data["snr"] > 9.0) & (data["filter"] <= 8) & \
+    (data["dm"] > 100) & (data["n_clusters"] > 4)
     data = data[mask]
 
     return data
@@ -64,8 +101,8 @@ def plot_candidates(t_data, filename, output_plots):
 
     if len(data) > 0:
         for item in data:
-            print("{0}, {1}, {2}".format(item["snr"], item["dm"],
-            item["filter"]))
+            print("{0}, {1}, {2}, {3}".format(item["snr"], item["dm"],
+            item["filter"], item["cand_file"]))
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -156,6 +193,31 @@ def plot_candidate_timeline(t_data, filename, output_plots):
     fig.tight_layout()
 
 
+def output_pulse_plot(t_data):
+    """
+    Run dspsr and psrplot to generate pulse plot.
+    """
+
+    data = np.copy(t_data)
+
+    if not len(data) == 1:
+        raise RuntimeError("Please provide a single candidate at a time.")
+
+    telescope = "jb"
+    start = data["start"]
+    end = start + 1.5
+
+    command = "dspsr -S {0} -T {1} -D {2} -O {3} {4}".format(start, end,
+    data["dm"], outfile, data["fil_name"])
+
+    # split into correct tokens for Popen 
+    args = shlex.split(command)
+    logging.debug(args)
+
+    # spawn process
+    result = subprocess.check_call(args)
+
+
 def signal_handler(signum, frame):
     """
     Handle UNIX signals sent to the programme.
@@ -196,7 +258,7 @@ def main():
     i = 0
 
     for item in args.files:
-        print(item)
+        print("Processing: {0}".format(item))
         part = load_data(item)
 
         if data is None:

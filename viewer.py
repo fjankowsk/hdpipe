@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
 import signal
 import argparse
 import logging
@@ -17,16 +18,34 @@ def load_data(filename):
     Load and parse heimdall candidate output.
     """
 
-    dtype = [("snr","float"), ("samp_nr","int"), ("time","float"), ("filter","int"),
+    dtype = [("snr","float"), ("samp_nr","int"), ("time","float"),
+            ("filter","int"),
             ("dmtrial","int"), ("dm","float"),
-            ("cluster_nr","int"), ("start","int"), ("end","int")]
+            ("n_clusters","int"), ("start","int"), ("end","int")]
 
     data = np.genfromtxt(filename, dtype=dtype)
+
+    data = np.atleast_1d(data)
 
     return data
 
 
-def plot_candidates(t_data, filename):
+def remove_bad_cands(t_data):
+    """
+    Remove candidates that are RFI.
+    """
+
+    data = np.copy(t_data)
+
+    # remove all low-snr candidates and the ones that are really wide
+    mask = (data["snr"] > 9.0) & (data["filter"] <= 8) & (data["dm"] > 100) & \
+    (data["n_clusters"] > 4)
+    data = data[mask]
+
+    return data
+
+
+def plot_candidates(t_data, filename, output_plots):
     """
     Plot heimdall candidate output.
     """
@@ -34,8 +53,19 @@ def plot_candidates(t_data, filename):
     data = np.copy(t_data)
 
     # remove all low-snr candidates and the ones that are really wide
-    mask = (data["snr"] > 9.0) & (data["filter"] <= 8) & (data["dm"] > 0)
-    data = data[mask]
+    data = remove_bad_cands(data)
+
+    print("Number of candidates: {0}".format(len(data)))
+
+    if not len(data) > 0:
+        return
+
+    data = np.sort(data, order=["snr", "dm", "filter"])
+
+    if len(data) > 0:
+        for item in data:
+            print("{0}, {1}, {2}".format(item["snr"], item["dm"],
+            item["filter"]))
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -53,14 +83,43 @@ def plot_candidates(t_data, filename):
 
     fig.tight_layout()
 
-    fig.savefig("{0}.png".format(filename), bbox_inches="tight")
+    if output_plots:
+        fig.savefig("{0}.png".format(filename), bbox_inches="tight")
 
-    # close the figure in order not
-    # to consume too much memory
-    plt.close(fig)
+        # close the figure in order not
+        # to consume too much memory
+        plt.close(fig)
 
 
-def plot_candidate_timeline(t_data, filename):
+def plot_clusters(t_data, filename, output_plots):
+    """
+    Plot heimdall candidate output.
+    """
+
+    data = np.copy(t_data)
+
+    if not len(data) > 0:
+        return
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(311)
+
+    ax1.scatter(data["dm"], data["n_clusters"])
+    ax1.grid(True)
+    ax1.set_yscale("log")
+
+    ax2 = fig.add_subplot(312)
+    ax2.scatter(data["snr"], data["n_clusters"])
+    ax2.grid(True)
+    ax2.set_yscale("log")
+
+    ax3 = fig.add_subplot(313)
+    ax3.scatter(data["snr"], data["n_clusters"])
+    ax3.grid(True)
+    ax3.set_yscale("log")
+
+
+def plot_candidate_timeline(t_data, filename, output_plots):
     """
     Plot heimdall candidate output as a timeline
     """
@@ -68,24 +127,31 @@ def plot_candidate_timeline(t_data, filename):
     data = np.copy(t_data)
 
     # remove all low-snr candidates and the ones that are really wide
-    #mask = (data["snr"] > 9.0) & (data["filter"] <= 8) & (data["dm"] > 0)
-    #data = data[mask]
+    data = remove_bad_cands(data)
+
+    if not len(data) > 0:
+        return
 
     data = np.sort(data, order="time")
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
-    sc = ax.scatter(data["time"], data["snr"],
-    c=data["filter"],
-    s=data["dm"]*40.0/2000.0,
-    marker="o")
+    sc = ax.scatter(data["time"], data["dm"]+1,
+    c=2**data["filter"],
+    norm=LogNorm(),
+    s=60.0*data["snr"]/np.max(data["snr"]),
+    marker="o",
+    edgecolor="black",
+    lw=0.6,
+    cmap="Reds")
     plt.colorbar(sc, label="Filter number")
 
     ax.grid()
-    ax.set_xlabel("time from start of integration")
-    ax.set_ylabel("S/N")
+    ax.set_xlabel("time [s]")
+    ax.set_ylabel("DM+1 [pc/cm3]")
     ax.set_title("{0}".format(filename))
+    ax.set_yscale("log")
 
     fig.tight_layout()
 
@@ -115,6 +181,8 @@ def main():
     parser = argparse.ArgumentParser(description="View heimdall candidates.")
     parser.add_argument("files", type=str, nargs="+",
     help="Candidate files to process.")
+    parser.add_argument("-o", "--output", action="store_true", dest="output",
+    default=False, help="Output plots to file rather than to screen.")
     parser.add_argument("--version", action="version", version=__version__)
     args = parser.parse_args()
 
@@ -124,13 +192,29 @@ def main():
             logging.error("The file does not exist: {0}".format(item))
             sys.exit(1)
 
+    data = None
+    i = 0
+
     for item in args.files:
         print(item)
-        data = load_data(item)
-        plot_candidates(data, item)
-        plot_candidate_timeline(data, item)
+        part = load_data(item)
 
-    plt.show()
+        if data is None:
+            data = np.copy(part)
+        else:
+            part["time"] += i*60.0
+            i += 1
+            data = np.concatenate((data, part))
+    
+    plot_clusters(data, item, args.output)
+    plot_candidates(data, item, args.output)
+    plot_candidate_timeline(data, item, args.output)
+
+    print("All done.")
+
+    if not args.output:
+        plt.show()
+
 
 # if run directly
 if __name__ == "__main__":

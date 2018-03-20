@@ -284,7 +284,15 @@ length=0):
     if nchan > 512:
         nchan = 512
 
-    cmd = "psrplot -p freq+ -c above:c='' -c x:unit=ms -j 'F {0:.0f}' -D -/PNG {1}".format(nchan, archive)
+    zap_file = os.path.expanduser("~/freq_zap_masks/zap_20cm.psh")
+    if not os.path.isfile(zap_file):
+        raise RuntimeError("The zap file does not exist: {0}".format(zap_file))
+
+    info_str = "S/N {0:.1f}; DM {1:.1f}; w {2:.1f} ms".format(snr, dm,
+    cand_filter_time*1E3)
+
+    cmd = "psrplot -p freq+ -J {0} -j 'F {1:.0f}' -c above:l='{2}' -c above:c='' -c above:r='{3}' -c x:unit=ms -D -/PNG {4}".format(zap_file,
+    nchan, os.path.basename(archive)[0:-3], info_str, archive)
 
     logging.info("psrplot cmd: {0}".format(cmd))
     args = shlex.split(cmd)

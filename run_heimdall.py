@@ -80,7 +80,7 @@ def main():
 
         try:
             run_heimdall(item, args.gpu_id)
-        except RuntimeError as e:
+        except Exception as e:
             logging.warn("Heimdall failed on file: {0}, {1}".format(item,
             str(e)))
 

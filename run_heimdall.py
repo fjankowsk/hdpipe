@@ -56,7 +56,7 @@ def main():
     # handle command line arguments
     parser = argparse.ArgumentParser(description="Run heimdall on filterbank files.")
     parser.add_argument("files", type=str, nargs="+",
-    help="Filterbank files to process.", required=True)
+    help="Filterbank files to process.")
     parser.add_argument("--version", action="version", version=__version__)
     args = parser.parse_args()
 
@@ -73,7 +73,12 @@ def main():
 
     for item in files:
         print("Processing: {0}".format(item))
-        part = load_data(item)
+
+        try:
+            run_heimdall(item)
+        except RuntimeError as e:
+            logging.warn("Heimdall failed on file: {0}, {1}".format(item,
+            str(e)))
 
     print("All done.")
 

@@ -223,6 +223,8 @@ length=0):
     logging.info("cand_band_smear: {0}".format(cand_band_smear))
 
     cand_filter_time = (2 ** filter) * samp_time
+    logging.info("Filter, cand_filter_time: {0}, {1}".format(filter,
+    cand_filter_time))
 
     cand_smearing = float(cand_band_smear) + float(cand_filter_time)
     cand_start_time = cand_time - (0.5 * cand_smearing)
@@ -233,7 +235,7 @@ length=0):
 
     # determine the bin width, based on heimdalls filter width
     if nbin == 0:
-        bin_width = samp_time * (2 ** filter)
+        bin_width = cand_filter_time
         nbin = int(cand_tot_time / bin_width)
 
     if nbin < 16:
@@ -290,6 +292,7 @@ length=0):
 
     info_str = "S/N {0:.1f}; DM {1:.1f}; w {2:.1f} ms".format(snr, dm,
     cand_filter_time*1E3)
+    logging.info(info_str)
 
     cmd = "psrplot -p freq+ -J {0} -j 'F {1:.0f}' -c above:l='{2}' -c above:c='' -c above:r='{3}' -c x:unit=ms -D -/PNG {4}".format(zap_file,
     nchan, os.path.basename(archive)[0:-3], info_str, archive)
@@ -368,6 +371,8 @@ def main():
         if icand % 2 == 0:
             print("New fil file detected: {0}, {1}".format(ifil, icand))
             ifil += 1
+
+        part = remove_bad_cands(part)
 
         if data is None:
             data = np.copy(part)

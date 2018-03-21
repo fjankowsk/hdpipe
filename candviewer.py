@@ -205,6 +205,9 @@ length=0):
 
     # for Lovell telescope
     samp_time = 0.000256
+    cfreq = 1564
+    bw = 336
+    nchan = 672
 
     if not os.path.isfile(fil_file):
         raise RuntimeError("Filterbank file does not exist: {0}".format(fil_file))
@@ -214,7 +217,7 @@ length=0):
 
     cand_time = samp_time * sample
 
-    cmd = "dmsmear -f 1382 -b 400 -n 1024 -d {0} -q".format(dm)
+    cmd = "dmsmear -f {0} -b {1} -n {2} -d {3} -q".format(cfreq, bw, nchan, dm)
     args = shlex.split(cmd)
     result = subprocess.check_output(args, stderr=subprocess.STDOUT,
     encoding="ASCII")
@@ -368,7 +371,8 @@ def main():
         part["fil_file"] = filfiles[ifil-1]
         part["total_time"] =  part["time"] + (ifil - 1)*60.0
 
-        if icand % 2 == 0:
+        # XXX: adjust this
+        if icand % 5 == 0:
             print("New fil file detected: {0}, {1}".format(ifil, icand))
             ifil += 1
 
@@ -392,7 +396,7 @@ def main():
     for item in good:
         try:
             plot_candidate_dspsr(item["fil_file"], item["samp_nr"],
-            item["filter"], item["dm"], item["snr"])
+            item["filter"], item["dm"], item["snr"], nchan=32)
         except subprocess.CalledProcessError as e:
             print("An error occurred: {0}".format(str(e)))
 

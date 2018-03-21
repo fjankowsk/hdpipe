@@ -342,6 +342,8 @@ def main():
     help="Filterbank files to process.", required=True)
     parser.add_argument("-o", "--output", action="store_true", dest="output",
     default=False, help="Output plots to file rather than to screen.")
+    parser.add_argument("-n", "--nchan", type=int, dest="nchan",
+    default=32, help="Scrunch to this many frequency channels (default: 32).")
     parser.add_argument("--version", action="version", version=__version__)
     args = parser.parse_args()
 
@@ -351,6 +353,10 @@ def main():
             if not os.path.isfile(item):
                 logging.error("The file does not exist: {0}".format(item))
                 sys.exit(1)
+
+    if not args.nchan >= 2:
+        logging.error("Nchan must be greater than 2: {0}".format(args.nchan))
+        sys.exit(1)
 
     candfiles = np.sort(args.candfiles)
     filfiles = np.sort(args.filfiles)
@@ -394,7 +400,7 @@ def main():
     for item in good:
         try:
             plot_candidate_dspsr(item["fil_file"], item["samp_nr"],
-            item["filter"], item["dm"], item["snr"], nchan=32)
+            item["filter"], item["dm"], item["snr"], nchan=args.nchan)
         except subprocess.CalledProcessError as e:
             print("An error occurred: {0}".format(str(e)))
 

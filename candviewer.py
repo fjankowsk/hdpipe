@@ -290,6 +290,7 @@ length=0):
     if nchan > 512:
         nchan = 512
 
+    # this works for 672 and 800 channel data
     zap_file = os.path.expanduser("~/freq_zap_masks/zap_20cm.psh")
     if not os.path.isfile(zap_file):
         raise RuntimeError("The zap file does not exist: {0}".format(zap_file))

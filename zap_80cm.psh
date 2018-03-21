@@ -1,0 +1,6 @@
+#!/bin/env psrsh
+# This is correct for Lovell telescope 80cm, 128 channels data
+zap chan 32-36
+zap chan 63-68
+zap chan 94-95
+

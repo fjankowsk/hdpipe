@@ -284,8 +284,9 @@ length=0):
     if nchan < 2:
         nchan = 2
 
-    nchan_base2 = int(round(math.log(nchan, 2)))
-    nchan = math.pow(2,nchan_base2)
+    # round nchan to closest power of 2
+    #nchan_base2 = int(round(math.log(nchan, 2)))
+    #nchan = math.pow(2,nchan_base2)
 
     if nchan > 512:
         nchan = 512

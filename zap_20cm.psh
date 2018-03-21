@@ -15,6 +15,6 @@ zap chan 480-484
 zap chan 668-671
 
 # zapping for 800 channels data
-if ( $nchan >= 672 ) zap chan 672-683
-if ( $nchan >= 672 ) zap chan 720-725
-if ( $nchan >= 672 ) zap chan 731-734
+if ( $nchan > 672 ) zap chan 672-683
+if ( $nchan > 672 ) zap chan 720-725
+if ( $nchan > 672 ) zap chan 731-734

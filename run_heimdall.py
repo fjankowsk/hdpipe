@@ -14,7 +14,7 @@ from time import sleep
 __version__ = "$Revision$"
 
 
-def run_heimdall(filename):
+def run_heimdall(filename, gpu_id):
     """
     Run heimdall on a filterbank file.
     """
@@ -24,7 +24,7 @@ def run_heimdall(filename):
 
     zap_str = "-zap_chans 48 53 -zap_chans 191 193 -zap_chans 211 230 -zap_chans 252 257 -zap_chans 284 340 -zap_chans 361 365 -zap_chans 409 410 -zap_chans 416 420 -zap_chans 447 451 -zap_chans 461 468 -zap_chans 472 476 -zap_chans 480 484 -zap_chans 668 671 -zap_chans 672 683 -zap_chans 720 725 -zap_chans 731 734"
 
-    command = "heimdall -dm 0 2000 -dm_tol 1.05 {0} -gpu_id 0 -f {1}".format(zap_str, filename)
+    command = "heimdall -dm 0 2000 -dm_tol 1.05 {0} -gpu_id {1} -f {2}".format(zap_str, gpu_id, filename)
 
     logging.info("Heimdall command: {0}".format(command))
 
@@ -57,6 +57,9 @@ def main():
     parser = argparse.ArgumentParser(description="Run heimdall on filterbank files.")
     parser.add_argument("files", type=str, nargs="+",
     help="Filterbank files to process.")
+    parser.add_argument("-g", "--gpu_id", dest="gpu_id", type=int,
+    choices=[0, 1], default=0,
+    help="Id of GPU to use.")
     parser.add_argument("--version", action="version", version=__version__)
     args = parser.parse_args()
 
@@ -69,13 +72,14 @@ def main():
     files = np.sort(args.files)
 
     print("Number of files to process: {0}".format(len(files)))
+    print("Using GPU: {0}".format(args.gpu_id))
     sleep(3)
 
     for item in files:
         print("Processing: {0}".format(item))
 
         try:
-            run_heimdall(item)
+            run_heimdall(item, args.gpu_id)
         except RuntimeError as e:
             logging.warn("Heimdall failed on file: {0}, {1}".format(item,
             str(e)))

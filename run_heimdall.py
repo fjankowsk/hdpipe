@@ -75,6 +75,8 @@ def main():
     print("Using GPU: {0}".format(args.gpu_id))
     sleep(3)
 
+    i = 0
+
     for item in files:
         print("Processing: {0}".format(item))
 
@@ -83,6 +85,10 @@ def main():
         except Exception as e:
             logging.warn("Heimdall failed on file: {0}, {1}".format(item,
             str(e)))
+        else:
+            i += 1
+
+    print("Successfully processed files: {0} ({1})".format(i, len(files)))
 
     print("All done.")
 

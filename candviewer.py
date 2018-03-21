@@ -368,7 +368,7 @@ def main():
         part["total_time"] =  part["time"] + (ifil - 1)*60.0
 
         # XXX: adjust this
-        if icand % 5 == 0:
+        if icand % 2 == 0:
             print("New fil file detected: {0}, {1}".format(ifil, icand))
             ifil += 1
 

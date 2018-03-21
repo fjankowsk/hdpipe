@@ -205,9 +205,9 @@ length=0):
 
     # for Lovell telescope
     samp_time = 0.000256
-    cfreq = 1564
-    bw = 336
-    nchan = 672
+    rec_cfreq = 1564
+    rec_bw = 336
+    rec_nchan = 672
 
     if not os.path.isfile(fil_file):
         raise RuntimeError("Filterbank file does not exist: {0}".format(fil_file))
@@ -217,7 +217,8 @@ length=0):
 
     cand_time = samp_time * sample
 
-    cmd = "dmsmear -f {0} -b {1} -n {2} -d {3} -q".format(cfreq, bw, nchan, dm)
+    cmd = "dmsmear -f {0} -b {1} -n {2} -d {3} -q".format(rec_cfreq, rec_bw,
+    rec_nchan, dm)
     args = shlex.split(cmd)
     result = subprocess.check_output(args, stderr=subprocess.STDOUT,
     encoding="ASCII")
@@ -283,7 +284,7 @@ length=0):
     if nchan < 2:
         nchan = 2
 
-    nchan_base2 = int(round(math.log(nchan,2)))
+    nchan_base2 = int(round(math.log(nchan, 2)))
     nchan = math.pow(2,nchan_base2)
 
     if nchan > 512:
@@ -297,23 +298,18 @@ length=0):
     cand_filter_time*1E3)
     logging.info(info_str)
 
-    cmd = "psrplot -p freq+ -J {0} -j 'F {1:.0f}' -c above:l='{2}' -c above:c='' -c above:r='{3}' -c x:unit=ms -D -/PNG {4}".format(zap_file,
-    nchan, os.path.basename(archive)[0:-3], info_str, archive)
+    outfile = os.path.join(".", os.path.basename(archive)[0:-3] + ".png")
+    cmd = "psrplot -p freq+ -J {0} -j 'F {1:.0f}' -c above:l='{2}' -c above:c='' -c above:r='{3}' -c x:unit=ms -D {4}/PNG {5}".format(zap_file,
+    nchan, os.path.basename(archive)[0:-3], info_str, outfile, archive)
 
     logging.info("psrplot cmd: {0}".format(cmd))
     args = shlex.split(cmd)
-    binary_data = subprocess.check_output(args)
+    subprocess.check_call(args)
 
-    outfile = os.path.join(".", os.path.basename(archive)[0:-3] + ".png")
-    with open(outfile, "wb") as f:
-        f.write(binary_data)
-    
     if os.path.exists(archive):
       os.remove(archive)
     os.rmdir(workdir)
     
-    return binary_data
-
 
 def signal_handler(signum, frame):
     """

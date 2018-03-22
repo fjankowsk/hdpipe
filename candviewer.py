@@ -197,8 +197,8 @@ def plot_candidate_timeline(t_data, filename, output_plots):
     fig.tight_layout()
 
 
-def plot_candidate_dspsr(fil_file, sample, filter, dm, snr, nchan=0, nbin=0,
-length=0):
+def plot_candidate_dspsr(fil_file, cand_file, cand_nr, sample, filter, dm, snr,
+nchan=0, nbin=0, length=0):
     """
     Plot a candidate using dspsr.
     """
@@ -296,13 +296,19 @@ length=0):
     if not os.path.isfile(zap_file):
         raise RuntimeError("The zap file does not exist: {0}".format(zap_file))
 
-    info_str = "S/N {0:.1f}; DM {1:.1f}; w {2:.1f} ms".format(snr, dm,
-    cand_filter_time*1E3)
-    logging.info(info_str)
+    info_str_l = r"Cand {0}\n{1}\n ".format(cand_nr,
+    os.path.basename(archive)[0:-3])
+    logging.info(info_str_l)
 
-    outfile = os.path.join(".", os.path.basename(archive)[0:-3] + ".png")
-    cmd = "psrplot -p freq+ -J {0} -j 'F {1:.0f}' -c above:l='{2}' -c above:c='' -c above:r='{3}' -c x:unit=ms -D {4}/PNG {5}".format(zap_file,
-    nchan, os.path.basename(archive)[0:-3], info_str, outfile, archive)
+    info_str_r = r"S/N {0:.1f}; DM {1:.1f}; w {2:.1f} ms\n{3}\n{4}".format(snr,
+    dm, cand_filter_time*1E3, os.path.basename(cand_file),
+    os.path.basename(fil_file))
+    logging.info(info_str_r)
+
+    outfile = os.path.join(".", os.path.basename(archive)[0:-3] + \
+    "_{0}.png".format(cand_nr))
+    cmd = "psrplot -p freq+ -J {0} -j 'F {1:.0f}' -c above:l='{2}' -c above:c='' -c above:r='{3}' -c x:unit=ms -c y:reverse=1 -D {4}/PNG {5}".format(zap_file,
+    nchan, info_str_l, info_str_r, outfile, archive)
 
     logging.info("psrplot cmd: {0}".format(cmd))
     args = shlex.split(cmd)
@@ -311,7 +317,7 @@ length=0):
     if os.path.exists(archive):
       os.remove(archive)
     os.rmdir(workdir)
-    
+
 
 def signal_handler(signum, frame):
     """
@@ -397,12 +403,17 @@ def main():
     good = remove_bad_cands(data)
     print("Number of good candidates: {0}".format(len(good)))
 
+    cand_nr = 1
+
     for item in good:
         try:
-            plot_candidate_dspsr(item["fil_file"], item["samp_nr"],
-            item["filter"], item["dm"], item["snr"], nchan=args.nchan)
+            plot_candidate_dspsr(item["fil_file"], item["cand_file"], cand_nr,
+            item["samp_nr"], item["filter"], item["dm"], item["snr"],
+            nchan=args.nchan)
         except subprocess.CalledProcessError as e:
             print("An error occurred: {0}".format(str(e)))
+
+        cand_nr += 1
 
     print("All done.")
 

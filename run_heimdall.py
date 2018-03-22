@@ -24,7 +24,7 @@ def run_heimdall(filename, gpu_id):
 
     zap_str = "-zap_chans 48 53 -zap_chans 191 193 -zap_chans 211 230 -zap_chans 252 257 -zap_chans 284 340 -zap_chans 361 365 -zap_chans 409 410 -zap_chans 416 420 -zap_chans 447 451 -zap_chans 461 468 -zap_chans 472 476 -zap_chans 480 484 -zap_chans 668 671 -zap_chans 672 683 -zap_chans 720 725 -zap_chans 731 734"
 
-    command = "heimdall -dm 0 2000 -dm_tol 1.05 {0} -gpu_id {1} -f {2}".format(zap_str, gpu_id, filename)
+    command = "heimdall -dm 0 5000 -dm_tol 1.05 {0} -gpu_id {1} -f {2}".format(zap_str, gpu_id, filename)
 
     logging.info("Heimdall command: {0}".format(command))
 

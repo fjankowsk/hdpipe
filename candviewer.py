@@ -216,8 +216,14 @@ nchan=0, nbin=0, length=0):
 
     cand_time = samp_time * sample
 
-    cmd = "dmsmear -f {0} -b {1} -n {2} -d {3} -q".format(rec_cfreq, rec_bw,
-    rec_nchan, dm)
+    # determine mjd of candidate
+    cmd = "header {0} -tstart".format(fil_file)
+    args = shlex.split(cmd)
+    start_mjd = subprocess.check_output(args, encoding="ASCII")
+    cand_mjd = float(start_mjd.strip()) + cand_time/(60*60*24.0)
+
+    cmd = "dmsmear -f {0} -b {1} -n {2} -d {3} -q".format(rec_cfreq,
+    rec_bw, rec_nchan, dm)
     args = shlex.split(cmd)
     result = subprocess.check_output(args, stderr=subprocess.STDOUT,
     encoding="ASCII")
@@ -295,17 +301,17 @@ nchan=0, nbin=0, length=0):
     if not os.path.isfile(zap_file):
         raise RuntimeError("The zap file does not exist: {0}".format(zap_file))
 
-    info_str_l = r"Cand {0}\n{1}\n ".format(cand_nr,
-    os.path.basename(archive)[0:-3])
+    info_str_l = r"Cand {0}\n{1}\n{2:.5f}".format(cand_nr,
+    os.path.basename(archive)[0:-3], cand_mjd)
     logging.info(info_str_l)
 
     info_str_r = r"S/N {0:.1f}; DM {1:.1f}; w {2:.1f} ms\n{3}\n{4}".format(snr,
-    dm, cand_filter_time*1E3, os.path.basename(cand_file),
-    os.path.basename(fil_file))
+    dm, cand_filter_time*1E3, os.path.basename(fil_file),
+    os.path.basename(cand_file))
     logging.info(info_str_r)
 
     outfile = os.path.join(".",
-    "{0}_{1:0>1}.png".format(os.path.basename(archive)[0:-3], cand_nr))
+    "c{0:0>4}_{1}.png".format(cand_nr, os.path.basename(archive)[0:-3]))
 
     cmd = "psrplot -p freq+ -J {0} -j 'F {1:.0f}' -c above:l='{2}' -c above:c='' -c above:r='{3}' -c x:unit=ms -c y:reverse=1 -D {4}/PNG {5}".format(zap_file,
     nchan, info_str_l, info_str_r, outfile, archive)
@@ -394,6 +400,7 @@ def main():
 
     # sort candidates by snr for plotting
     good = np.sort(good, order="snr")
+    good = np.flipud(good)
 
     sleep(3)
 

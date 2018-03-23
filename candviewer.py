@@ -395,7 +395,7 @@ def main():
     # sort candidates by snr for plotting
     good = np.sort(good, order="snr")
 
-    time.sleep(3)
+    sleep(3)
 
     print("Plotting good candidates.")
 

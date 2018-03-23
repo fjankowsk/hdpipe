@@ -44,8 +44,6 @@ def run_heimdall(filename, gpu_id):
         with open(item, "r") as f:
             total += f.read()
 
-        total += r"\n"
-
     outfile = "{0}.cand".format(filename[0:-4])
     with open(outfile, "w") as f:
         f.write(total)

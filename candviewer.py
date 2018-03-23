@@ -54,9 +54,8 @@ def load_data(filename):
     temp = np.genfromtxt(filename, dtype=dtype)
     temp = np.atleast_1d(temp)
 
-    dtype = [("cand_file_nr","int"), ("cand_file","|U4096"),
-    ("fil_file_nr","int"), ("fil_file","|U4096"),
-    ("total_time","float")]
+    dtype = [("cand_file","|U4096"), ("fil_file","|U4096"),
+            ("total_time","float")]
     new_dtype = dtype_add_fields(temp, dtype)
 
     data = np.zeros(len(temp), dtype=new_dtype)
@@ -269,7 +268,7 @@ nchan=0, nbin=0, length=0):
 
     archive = result.split("seconds: ")[1]
     archive = archive.strip()
-    archive = os.path.join(workdir, archive + ".ar")
+    archive = os.path.join(workdir, "{0}.ar".format(archive))
     logging.debug(archive)
 
     count = 10 
@@ -305,8 +304,9 @@ nchan=0, nbin=0, length=0):
     os.path.basename(fil_file))
     logging.info(info_str_r)
 
-    outfile = os.path.join(".", os.path.basename(archive)[0:-3] + \
-    "_{0}.png".format(cand_nr))
+    outfile = os.path.join(".",
+    "{0}_{1:0>1}.png".format(os.path.basename(archive)[0:-3], cand_nr))
+
     cmd = "psrplot -p freq+ -J {0} -j 'F {1:.0f}' -c above:l='{2}' -c above:c='' -c above:r='{3}' -c x:unit=ms -c y:reverse=1 -D {4}/PNG {5}".format(zap_file,
     nchan, info_str_l, info_str_r, outfile, archive)
 
@@ -314,8 +314,9 @@ nchan=0, nbin=0, length=0):
     args = shlex.split(cmd)
     subprocess.check_call(args)
 
+    # clean up
     if os.path.exists(archive):
-      os.remove(archive)
+        os.remove(archive)
     os.rmdir(workdir)
 
 
@@ -342,10 +343,8 @@ def main():
 
     # handle command line arguments
     parser = argparse.ArgumentParser(description="View heimdall candidates.")
-    parser.add_argument("-c", type=str, dest="candfiles", nargs="+",
-    help="Candidate files to process.", required=True)
-    parser.add_argument("-f", type=str, dest="filfiles", nargs="+",
-    help="Filterbank files to process.", required=True)
+    parser.add_argument("candfiles", type=str, nargs="+",
+    help="Candidate files to process.")
     parser.add_argument("-o", "--output", action="store_true", dest="output",
     default=False, help="Output plots to file rather than to screen.")
     parser.add_argument("-n", "--nchan", type=int, dest="nchan",
@@ -354,37 +353,27 @@ def main():
     args = parser.parse_args()
 
     # sanity check
-    for sel in [args.candfiles, args.filfiles]:
-        for item in sel:
-            if not os.path.isfile(item):
-                logging.error("The file does not exist: {0}".format(item))
-                sys.exit(1)
+    for item in args.candfiles:
+        if not os.path.isfile(item):
+            logging.error("The file does not exist: {0}".format(item))
+            sys.exit(1)
 
     if not args.nchan >= 2:
         logging.error("Nchan must be greater than 2: {0}".format(args.nchan))
         sys.exit(1)
 
     candfiles = np.sort(args.candfiles)
-    filfiles = np.sort(args.filfiles)
 
     data = None
-    icand = 1
-    ifil = 1
+    i = 1
 
     for item in candfiles:
         print("Processing: {0}".format(item))
         part = load_data(item)
 
-        part["cand_file_nr"] = icand
         part["cand_file"] = item
-        part["fil_file_nr"] = ifil
-        part["fil_file"] = filfiles[ifil-1]
-        part["total_time"] =  part["time"] + (ifil - 1)*60.0
-
-        # XXX: adjust this
-        if icand % 2 == 0:
-            print("New fil file detected: {0}, {1}".format(ifil, icand))
-            ifil += 1
+        part["fil_file"] = "{0}.fil".format(item[0:-5])
+        part["total_time"] =  part["time"] + (i - 1)*60.0
 
         part = remove_bad_cands(part)
 
@@ -393,7 +382,7 @@ def main():
         else:
             data = np.concatenate((data, part))
 
-        icand += 1
+        i += 1
     
     plot_clusters(data, item, args.output)
     plot_candidates(data, item, args.output)
@@ -402,6 +391,21 @@ def main():
     # remove all low-snr candidates and the ones that are really wide
     good = remove_bad_cands(data)
     print("Number of good candidates: {0}".format(len(good)))
+
+    # sort candidates by snr for plotting
+    good = np.sort(good, order="snr")
+
+    time.sleep(3)
+
+    print("Plotting good candidates.")
+
+    # sanity check
+    for item in good:
+        if os.path.isfile(item["cand_file"]) \
+        and os.path.isfile(item["fil_file"]):
+            pass
+        else:
+            raise RuntimeError("Cand or fil file do not exist: {0}, {1}".format(item["cand_file"]), item["fil_file"])
 
     cand_nr = 1
 

@@ -1,12 +1,17 @@
 #!/bin/env psrsh
 # This is correct for Lovell telescope 20cm, 672 channels data
+zap chan 48-53
 zap chan 191-193
 zap chan 211-230
 zap chan 252-257
 zap chan 284-340
 zap chan 361-365
-zap chan 409-451
-zap chan 461-484
+zap chan 409-410
+zap chan 416-420
+zap chan 447-451
+zap chan 461-468
+zap chan 472-476
+zap chan 480-484
 zap chan 668-671
 
 # zapping for 800 channels data

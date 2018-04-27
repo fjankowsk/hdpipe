@@ -196,8 +196,38 @@ def plot_candidate_timeline(t_data, filename, output_plots):
     fig.tight_layout()
 
 
+def get_zap_file(zap_mode):
+    """
+    Get the name of the psrsh zap file to use.
+
+    Parameters
+    ----------
+    zap_mode : str
+        Zap mode to use.
+
+    Returns
+    -------
+    zap_file : str
+        Absolute filename of zap file to use.
+    """
+
+    if zap_mode == "None":
+        # no zapping
+        zap_file = os.path.expanduser("~/freq_zap_masks/zap_none.psh")
+
+    elif zap_mode == "Lovell_20cm":
+        # Lovell 20cm data
+        # this works for 672 and 800 channel data
+        zap_file = os.path.expanduser("~/freq_zap_masks/zap_20cm.psh")
+
+    else:
+        RuntimeError("Zap mask mode unknown: {0}".format(zap_mode))
+
+    return zap_file
+
+
 def plot_candidate_dspsr(fil_file, cand_file, cand_nr, sample, filter, dm, snr,
-nchan=0, nbin=0, length=0):
+zap_mode, nchan=0, nbin=0, length=0):
     """
     Plot a candidate using dspsr.
     """
@@ -296,8 +326,8 @@ nchan=0, nbin=0, length=0):
     if nchan > 512:
         nchan = 512
 
-    # this works for 672 and 800 channel data
-    zap_file = os.path.expanduser("~/freq_zap_masks/zap_20cm.psh")
+    # get the zap file to use
+    zap_file = get_zap_file(zap_mode)
     if not os.path.isfile(zap_file):
         raise RuntimeError("The zap file does not exist: {0}".format(zap_file))
 
@@ -353,6 +383,9 @@ def main():
     help="Candidate files to process.")
     parser.add_argument("-o", "--output", action="store_true", dest="output",
     default=False, help="Output plots to file rather than to screen.")
+    parser.add_argument("-z", "--zap_mode", dest="zap_mode", type=str,
+    choices=["None", "Lovell_20cm"], default="None",
+    help="Frequency zap mask mode to use (default: None).")
     parser.add_argument("-n", "--nchan", type=int, dest="nchan",
     default=32, help="Scrunch to this many frequency channels (default: 32).")
     parser.add_argument("--version", action="version", version=__version__)
@@ -420,7 +453,7 @@ def main():
         try:
             plot_candidate_dspsr(item["fil_file"], item["cand_file"], cand_nr,
             item["samp_nr"], item["filter"], item["dm"], item["snr"],
-            nchan=args.nchan)
+            args.zap_mode, nchan=args.nchan)
         except subprocess.CalledProcessError as e:
             print("An error occurred: {0}".format(str(e)))
 

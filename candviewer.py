@@ -110,7 +110,7 @@ def plot_candidates(t_data, filename, output_plots):
     if len(data) > 0:
         for item in data:
             print("{0}, {1}, {2}, {3}".format(item["snr"], item["dm"],
-            item["filter"], item["cand_file"]))
+                                              item["filter"], item["cand_file"]))
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -177,7 +177,7 @@ def plot_candidate_timeline(t_data, filename, output_plots):
     if not len(data) > 0:
         return
 
-    data = np.sort(data, order="time")
+    data = np.sort(data, order="total_time")
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -237,28 +237,39 @@ zap_mode, nchan=0, nbin=0, length=0):
     Plot a candidate using dspsr.
     """
 
-    # for Lovell telescope
-    samp_time = 0.000256
-    rec_cfreq = 1564
-    rec_bw = 336
-    rec_nchan = 672
-
     if not os.path.isfile(fil_file):
         raise RuntimeError("Filterbank file does not exist: {0}".format(fil_file))
+
+    # determine data parameters
+    cmd = "header {0} -tsamp -tobs -tstart -nchans -foff -fch1".format(fil_file)
+    args = shlex.split(cmd)
+    raw = subprocess.check_output(args, encoding="ASCII")
+    info = raw.split("\n")
+
+    samp_time = float(info[0].strip())
+    samp_time *= 1E-6
+    tobs = float(info[1].strip())
+    tstart = float(info[2].strip())
+    rec_nchan = int(info[3].strip())
+    foff = float(info[4].strip())
+    fch1 = float(info[5].strip())
+    rec_bw = float(abs(foff * rec_nchan))
+    rec_cfreq = float(fch1 + 0.5*rec_nchan * foff)
+
+    cand_time = samp_time * sample
+    # determine mjd of candidate
+    cand_mjd = float(tstart + cand_time/(60*60*24.0))
+
+    logging.info("Data parameters: {0}, {1}, {2}, {3}, {4}, {5} MJD".format(samp_time, tobs,
+                                                                        rec_cfreq, rec_nchan,
+                                                                        rec_bw, tstart))
+    logging.info("Candidate parameters: {0} s, {1} MJD".format(cand_time, cand_mjd))
 
     # use the absolute path here
     fil_file = os.path.abspath(fil_file)
 
-    cand_time = samp_time * sample
-
-    # determine mjd of candidate
-    cmd = "header {0} -tstart".format(fil_file)
-    args = shlex.split(cmd)
-    start_mjd = subprocess.check_output(args, encoding="ASCII")
-    cand_mjd = float(start_mjd.strip()) + cand_time/(60*60*24.0)
-
     cmd = "dmsmear -f {0} -b {1} -n {2} -d {3} -q".format(rec_cfreq,
-    rec_bw, rec_nchan, dm)
+                                                          rec_bw, rec_nchan, dm)
     args = shlex.split(cmd)
     result = subprocess.check_output(args, stderr=subprocess.STDOUT,
                                      encoding="ASCII")
@@ -268,7 +279,7 @@ zap_mode, nchan=0, nbin=0, length=0):
 
     cand_filter_time = (2 ** filter) * samp_time
     logging.info("Filter, cand_filter_time: {0}, {1}".format(filter,
-    cand_filter_time))
+                                                             cand_filter_time))
 
     cand_smearing = float(cand_band_smear) + float(cand_filter_time)
     cand_start_time = cand_time - (0.5 * cand_smearing)
@@ -450,15 +461,15 @@ def main():
         and os.path.isfile(item["fil_file"]):
             pass
         else:
-            raise RuntimeError("Cand or fil file do not exist: {0}, {1}".format(item["cand_file"]), item["fil_file"])
+            raise RuntimeError("Cand or fil file do not exist: {0}, {1}".format(item["cand_file"], item["fil_file"]))
 
     cand_nr = 1
 
     for item in good:
         try:
             plot_candidate_dspsr(item["fil_file"], item["cand_file"], cand_nr,
-            item["samp_nr"], item["filter"], item["dm"], item["snr"],
-            args.zap_mode, nchan=args.nchan)
+                                 item["samp_nr"], item["filter"], item["dm"], item["snr"],
+                                 args.zap_mode, nchan=args.nchan)
         except subprocess.CalledProcessError as e:
             print("An error occurred: {0}".format(str(e)))
 

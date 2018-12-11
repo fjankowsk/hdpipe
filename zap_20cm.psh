@@ -18,3 +18,6 @@ zap chan 668-671
 if ( $nchan > 672 ) zap chan 672-683
 if ( $nchan > 672 ) zap chan 720-725
 if ( $nchan > 672 ) zap chan 731-734
+
+zap median
+zap iqr

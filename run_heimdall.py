@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+#   Run heimdall single-pulse detection pipeline.
+#   2018 Fabian Jankowski
+#
+
 import numpy as np
 import signal
 import argparse
@@ -116,13 +121,13 @@ def main():
     # handle command line arguments
     parser = argparse.ArgumentParser(description="Run heimdall on filterbank files.")
     parser.add_argument("files", type=str, nargs="+",
-    help="Filterbank files to process.")
+                        help="Filterbank files to process.")
     parser.add_argument("-g", "--gpu_id", dest="gpu_id", type=int,
-    choices=[0, 1], default=0,
-    help="Id of GPU to use.")
+                        choices=[0, 1], default=0,
+                        help="Id of GPU to use.")
     parser.add_argument("-z", "--zap_mode", dest="zap_mode", type=str,
-    choices=["None", "Lovell_20cm"], default="None",
-    help="Frequency zap mask mode to use (default: None).")
+                        choices=["None", "Lovell_20cm"], default="None",
+                        help="Frequency zap mask mode to use (default: None).")
     parser.add_argument("--version", action="version", version=__version__)
     args = parser.parse_args()
 

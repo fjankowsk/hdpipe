@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+#   Visualize heimdall single-pulse candidates.
+#   2018 Fabian Jankowski
+#
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
@@ -79,7 +84,7 @@ def remove_bad_cands(t_data):
 
     # remove all low-snr candidates and the ones that are really wide
     mask = (data["snr"] > 9.0) & (data["filter"] <= 8) & \
-    (data["dm"] > 100) & (data["n_clusters"] > 4)
+           (data["dm"] > 100) & (data["n_clusters"] > 4)
     data = data[mask]
 
     return data
@@ -111,8 +116,8 @@ def plot_candidates(t_data, filename, output_plots):
     ax = fig.add_subplot(111)
 
     sc = ax.scatter(data["dm"] + 1, data["snr"],
-    c=data["filter"],
-    marker="o")
+                    c=data["filter"],
+                    marker="o")
     plt.colorbar(sc, label="Filter number")
 
     ax.set_xscale("log")
@@ -178,13 +183,13 @@ def plot_candidate_timeline(t_data, filename, output_plots):
     ax = fig.add_subplot(111)
 
     sc = ax.scatter(data["total_time"], data["dm"]+1,
-    c=2**data["filter"],
-    norm=LogNorm(),
-    s=60.0*data["snr"]/np.max(data["snr"]),
-    marker="o",
-    edgecolor="black",
-    lw=0.6,
-    cmap="Reds")
+                    c=2**data["filter"],
+                    norm=LogNorm(),
+                    s=60.0*data["snr"]/np.max(data["snr"]),
+                    marker="o",
+                    edgecolor="black",
+                    lw=0.6,
+                    cmap="Reds")
     plt.colorbar(sc, label="Filter number")
 
     ax.grid()
@@ -256,7 +261,7 @@ zap_mode, nchan=0, nbin=0, length=0):
     rec_bw, rec_nchan, dm)
     args = shlex.split(cmd)
     result = subprocess.check_output(args, stderr=subprocess.STDOUT,
-    encoding="ASCII")
+                                     encoding="ASCII")
 
     cand_band_smear = float(result.strip())
     logging.info("cand_band_smear: {0}".format(cand_band_smear))
@@ -300,7 +305,7 @@ zap_mode, nchan=0, nbin=0, length=0):
 
     args = shlex.split(cmd)
     result = subprocess.check_output(args, stderr=subprocess.STDOUT,
-    encoding="ASCII", cwd=workdir)
+                                     encoding="ASCII", cwd=workdir)
 
     archive = result.split("seconds: ")[1]
     archive = archive.strip()
@@ -380,14 +385,14 @@ def main():
     # handle command line arguments
     parser = argparse.ArgumentParser(description="View heimdall candidates.")
     parser.add_argument("candfiles", type=str, nargs="+",
-    help="Candidate files to process.")
+                        help="Candidate files to process.")
     parser.add_argument("-o", "--output", action="store_true", dest="output",
-    default=False, help="Output plots to file rather than to screen.")
+                        default=False, help="Output plots to file rather than to screen.")
     parser.add_argument("-z", "--zap_mode", dest="zap_mode", type=str,
-    choices=["None", "Lovell_20cm"], default="None",
-    help="Frequency zap mask mode to use (default: None).")
+                        choices=["None", "Lovell_20cm"], default="None",
+                        help="Frequency zap mask mode to use (default: None).")
     parser.add_argument("-n", "--nchan", type=int, dest="nchan",
-    default=32, help="Scrunch to this many frequency channels (default: 32).")
+                        default=32, help="Scrunch to this many frequency channels (default: 32).")
     parser.add_argument("--version", action="version", version=__version__)
     args = parser.parse_args()
 

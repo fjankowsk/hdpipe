@@ -34,3 +34,13 @@ RUN pip3 install \
     ipython \
     matplotlib \
     numpy
+
+# install our software in docker image
+ARG SOFT_PATH="/software/hdpipe"
+
+RUN mkdir -p ${SOFT_PATH}
+COPY . ${SOFT_PATH}
+RUN chown -R ${USERID}:${USERID} ${SOFT_PATH}
+
+ENV PYTHONPATH ${SOFT_PATH}:${PYTHONPATH}
+WORKDIR ${SOFT_PATH}

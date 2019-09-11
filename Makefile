@@ -10,7 +10,6 @@ help:
 	@echo 'Usage:'
 	@echo 'make interactive     run an interactive shell'
 	@echo 'make production      build docker image for production use'
-	@echo
 
 interactive:
 	${DCK} run -it --rm \

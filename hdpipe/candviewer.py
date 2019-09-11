@@ -20,8 +20,7 @@ from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 import numpy as np
 
-# version info
-__version__ = "$Revision$"
+from hdpipe.version import __version__
 
 
 def dtype_add_fields(data, dtype):

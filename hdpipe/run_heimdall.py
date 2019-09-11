@@ -18,8 +18,7 @@ from time import sleep
 
 import numpy as np
 
-# version info
-__version__ = "$Revision$"
+from hdpipe.version import __version__
 
 
 def get_zap_str(zap_mode):

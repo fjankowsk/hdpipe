@@ -2,20 +2,21 @@
 # -*- coding: utf-8 -*-
 #
 #   Run heimdall single-pulse detection pipeline.
-#   2018 Fabian Jankowski
+#   2018-2019 Fabian Jankowski
 #
 
-import numpy as np
-import signal
 import argparse
+import glob
 import logging
-import sys
 import os
 import shlex
+import signal
 import subprocess
+import sys
 import tempfile
-import glob
 from time import sleep
+
+import numpy as np
 
 # version info
 __version__ = "$Revision$"

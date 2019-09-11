@@ -2,22 +2,23 @@
 # -*- coding: utf-8 -*-
 #
 #   Visualize heimdall single-pulse candidates.
-#   2018 Fabian Jankowski
+#   2018-2019 Fabian Jankowski
 #
 
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
-import signal
 import argparse
 import logging
-import sys
+import math
 import os.path
 import shlex
+import signal
 import subprocess
+import sys
 import tempfile
 from time import sleep
-import math
+
+from matplotlib.colors import LogNorm
+import matplotlib.pyplot as plt
+import numpy as np
 
 # version info
 __version__ = "$Revision$"

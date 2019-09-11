@@ -17,7 +17,9 @@ RUN apt-get install -y \
     heimdall-astro \
     psrchive \
     python3 \
-    python3-pip
+    python3-pip \
+    sigproc \
+    sigpyproc
 
 # add smart history search
 RUN echo "\"\e[A\":history-search-backward" >> /etc/skel/.inputrc && \

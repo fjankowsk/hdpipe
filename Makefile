@@ -13,6 +13,7 @@ help:
 
 interactive:
 	${DCK} run -it --rm \
+	--runtime=nvidia \
 	--user ${USERID} \
 	heimdall_pipeline bash
 

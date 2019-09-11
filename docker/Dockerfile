@@ -15,7 +15,6 @@ RUN apt-get update
 RUN apt-get install -y \
     dspsr \
     heimdall-astro \
-    nvidia-cuda-toolkit \
     psrchive \
     python3 \
     python3-pip \

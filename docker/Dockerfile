@@ -7,13 +7,15 @@ LABEL description="Docker image for heimdall single-pulse pipeline."
 RUN apt-get update
 RUN apt-get install -y software-properties-common
 
-RUN add-apt-repository -y ppa:kernsuite/kern-4
+RUN add-apt-repository -y ppa:kernsuite/kern-5
 RUN add-apt-repository -y multiverse
 RUN add-apt-repository -y restricted
 
 RUN apt-get update
 RUN apt-get install -y \
+    dspsr \
     heimdall-astro \
+    psrchive \
     python3 \
     python3-pip
 

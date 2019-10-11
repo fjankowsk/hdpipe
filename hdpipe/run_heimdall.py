@@ -63,6 +63,8 @@ def run_heimdall(filename, gpu_id, zap_mode):
         Frequency zap mask to use.
     """
 
+    log = logging.getLogger('hdpipe.run_heimdall')
+
     if not os.path.isfile(filename):
         raise RuntimeError("The file does not exist: {0}".format(filename))
 
@@ -70,11 +72,11 @@ def run_heimdall(filename, gpu_id, zap_mode):
     zap_str = get_zap_str(zap_mode)
 
     tempdir = tempfile.mkdtemp()
-    logging.info("Temp dir: {0}".format(tempdir))
+    log.info("Temp dir: {0}".format(tempdir))
 
     command = "heimdall -dm 0 5000 -dm_tol 1.05 -output_dir {0} {1} -gpu_id {2} -f {3}".format(tempdir, zap_str, gpu_id, filename)
 
-    logging.info("Heimdall command: {0}".format(command))
+    log.info("Heimdall command: {0}".format(command))
 
     args = shlex.split(command)
     subprocess.check_call(args)
@@ -107,6 +109,26 @@ def signal_handler(signum, frame):
         logging.warn("SIGINT received, stopping the program.")
         sys.exit(1)
 
+
+def setup_logging():
+    """
+    Setup the logging configuration.
+    """
+
+    log = logging.getLogger('hdpipe')
+
+    log.setLevel(logging.DEBUG)
+    log.propagate = False
+
+    # log to console
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+    fmt = "%(asctime)s, %(processName)s, %(name)s, %(module)s, %(levelname)s: %(message)s"
+    console_formatter = logging.Formatter(fmt)
+    console.setFormatter(console_formatter)
+    log.addHandler(console)
+
+
 #
 # MAIN
 #
@@ -115,21 +137,21 @@ def main():
     # start signal handler
     signal.signal(signal.SIGINT, signal_handler)
 
-    # set up logging
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-
     # handle command line arguments
     parser = argparse.ArgumentParser(description="Run heimdall on filterbank files.")
     parser.add_argument("files", type=str, nargs="+",
                         help="Filterbank files to process.")
     parser.add_argument("-g", "--gpu_id", dest="gpu_id", type=int,
                         choices=[0, 1], default=0,
-                        help="Id of GPU to use.")
+                        help="ID of GPU to use.")
     parser.add_argument("-z", "--zap_mode", dest="zap_mode", type=str,
                         choices=["None", "Lovell_20cm"], default="None",
                         help="Frequency zap mask mode to use (default: None).")
     parser.add_argument("--version", action="version", version=__version__)
     args = parser.parse_args()
+
+    setup_logging()
+    log = logging.getLogger('hdpipe.run_heimdall')
 
     # sanity check
     for item in args.files:
@@ -152,7 +174,7 @@ def main():
         try:
             run_heimdall(item, args.gpu_id, args.zap_mode)
         except Exception as e:
-            logging.warn("Heimdall failed on file: {0}, {1}".format(item,
+            log.warn("Heimdall failed on file: {0}, {1}".format(item,
             str(e)))
         else:
             i += 1

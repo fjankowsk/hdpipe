@@ -123,7 +123,7 @@ def plot_candidates(t_data, filename, output_plots):
 
     ax.set_xscale("log")
     ax.grid()
-    ax.set_xlabel("DM+1 [pc/cm3]")
+    ax.set_xlabel("DM + 1 (pc/cm3)")
     ax.set_ylabel("S/N")
     ax.set_title("{0}".format(filename))
 
@@ -183,10 +183,10 @@ def plot_candidate_timeline(t_data, filename, output_plots):
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
-    sc = ax.scatter(data["total_time"], data["dm"]+1,
+    sc = ax.scatter(data["total_time"], data["dm"] + 1,
                     c=2**data["filter"],
                     norm=LogNorm(),
-                    s=60.0*data["snr"]/np.max(data["snr"]),
+                    s=60.0 * data["snr"] / np.max(data["snr"]),
                     marker="o",
                     edgecolor="black",
                     lw=0.6,
@@ -194,8 +194,8 @@ def plot_candidate_timeline(t_data, filename, output_plots):
     plt.colorbar(sc, label="Filter number")
 
     ax.grid()
-    ax.set_xlabel("time [s]")
-    ax.set_ylabel("DM+1 [pc/cm3]")
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("DM + 1 (pc/cm3)")
     ax.set_title("{0}".format(filename))
     ax.set_yscale("log")
 
@@ -246,7 +246,7 @@ zap_mode, nchan=0, nbin=0, length=0):
     # determine data parameters
     cmd = "header {0} -tsamp -tobs -tstart -nchans -foff -fch1".format(fil_file)
     args = shlex.split(cmd)
-    raw = subprocess.check_output(args, encoding="ASCII")
+    raw = subprocess.check_output(args, encoding="ascii")
     info = raw.split("\n")
 
     samp_time = float(info[0].strip())

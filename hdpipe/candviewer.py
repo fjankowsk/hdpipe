@@ -51,16 +51,18 @@ def load_data(filename):
     Load and parse heimdall candidate output.
     """
 
-    dtype = [("snr","float"), ("samp_nr","int"), ("time","float"),
-            ("filter","int"),
-            ("dmtrial","int"), ("dm","float"),
-            ("n_clusters","int"), ("start","int"), ("end","int")]
+    dtype = [
+        ("snr","float"), ("samp_nr","int"), ("time","float"),
+        ("filter","int"),
+        ("dmtrial","int"), ("dm","float"),
+        ("n_clusters","int"), ("start","int"), ("end","int")
+        ]
 
     temp = np.genfromtxt(filename, dtype=dtype)
     temp = np.atleast_1d(temp)
 
     dtype = [("cand_file","|U4096"), ("fil_file","|U4096"),
-            ("total_time","float")]
+             ("total_time","float")]
     new_dtype = dtype_add_fields(temp, dtype)
 
     data = np.zeros(len(temp), dtype=new_dtype)

@@ -17,6 +17,7 @@ from time import sleep
 
 import numpy as np
 
+from hdpipe.general_helpers import (signal_handler, setup_logging)
 from hdpipe.version import __version__
 
 
@@ -98,36 +99,6 @@ def run_heimdall(filename, gpu_id, zap_mode):
     os.rmdir(tempdir)
 
 
-def signal_handler(signum, frame):
-    """
-    Handle UNIX signals sent to the programme.
-    """
-
-    # treat SIGINT/INT/CRTL-C
-    if signum == signal.SIGINT:
-        logging.warn("SIGINT received, stopping the program.")
-        sys.exit(1)
-
-
-def setup_logging():
-    """
-    Setup the logging configuration.
-    """
-
-    log = logging.getLogger('hdpipe')
-
-    log.setLevel(logging.DEBUG)
-    log.propagate = False
-
-    # log to console
-    console = logging.StreamHandler()
-    console.setLevel(logging.INFO)
-    fmt = "%(asctime)s, %(processName)s, %(name)s, %(module)s, %(levelname)s: %(message)s"
-    console_formatter = logging.Formatter(fmt)
-    console.setFormatter(console_formatter)
-    log.addHandler(console)
-
-
 #
 # MAIN
 #
@@ -135,6 +106,9 @@ def setup_logging():
 def main():
     # start signal handler
     signal.signal(signal.SIGINT, signal_handler)
+
+    setup_logging()
+    log = logging.getLogger('hdpipe.run_heimdall')
 
     # handle command line arguments
     parser = argparse.ArgumentParser(description="Run heimdall on filterbank files.")
@@ -149,13 +123,10 @@ def main():
     parser.add_argument("--version", action="version", version=__version__)
     args = parser.parse_args()
 
-    setup_logging()
-    log = logging.getLogger('hdpipe.run_heimdall')
-
     # sanity check
     for item in args.files:
         if not os.path.isfile(item):
-            logging.error("The file does not exist: {0}".format(item))
+            log.error("The file does not exist: {0}".format(item))
             sys.exit(1)
 
     files = np.sort(args.files)

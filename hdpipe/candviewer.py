@@ -19,6 +19,7 @@ from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 import numpy as np
 
+from hdpipe.general_helpers import (signal_handler, setup_logging)
 from hdpipe.version import __version__
 
 
@@ -35,8 +36,7 @@ def dtype_add_fields(data, dtype):
     # check that field names are not already there
     for field in dtype.names:
         if field in data.dtype.names:
-            logging.error("Field is already there: {0}".format(field))
-            sys.exit(1)
+            raise RuntimeError("Field is already there: {0}".format(field))
 
     r = list(data.dtype.descr) + list(dtype.descr)
 
@@ -238,6 +238,8 @@ zap_mode, nchan=0, nbin=0, length=0):
     Plot a candidate using dspsr.
     """
 
+    log = logging.getLogger('hdpipe.candviewer')
+
     if not os.path.isfile(fil_file):
         raise RuntimeError("Filterbank file does not exist: {0}".format(fil_file))
 
@@ -261,10 +263,10 @@ zap_mode, nchan=0, nbin=0, length=0):
     # determine mjd of candidate
     cand_mjd = float(tstart + cand_time/(60*60*24.0))
 
-    logging.info("Data parameters: {0}, {1}, {2}, {3}, {4}, {5} MJD".format(samp_time, tobs,
+    log.info("Data parameters: {0}, {1}, {2}, {3}, {4}, {5} MJD".format(samp_time, tobs,
                                                                         rec_cfreq, rec_nchan,
                                                                         rec_bw, tstart))
-    logging.info("Candidate parameters: {0} s, {1} MJD".format(cand_time, cand_mjd))
+    log.info("Candidate parameters: {0} s, {1} MJD".format(cand_time, cand_mjd))
 
     # use the absolute path here
     fil_file = os.path.abspath(fil_file)
@@ -272,14 +274,15 @@ zap_mode, nchan=0, nbin=0, length=0):
     cmd = "dmsmear -f {0} -b {1} -n {2} -d {3} -q".format(rec_cfreq,
                                                           rec_bw, rec_nchan, dm)
     args = shlex.split(cmd)
-    result = subprocess.check_output(args, stderr=subprocess.STDOUT,
-                                     encoding="ASCII")
+    result = subprocess.check_output(args,
+                                     stderr=subprocess.STDOUT,
+                                     encoding="ascii")
 
     cand_band_smear = float(result.strip())
-    logging.info("cand_band_smear: {0}".format(cand_band_smear))
+    log.info("cand_band_smear: {0}".format(cand_band_smear))
 
     cand_filter_time = (2 ** filter) * samp_time
-    logging.info("Filter, cand_filter_time: {0}, {1}".format(filter,
+    log.info("Filter, cand_filter_time: {0}, {1}".format(filter,
                                                              cand_filter_time))
 
     cand_smearing = float(cand_band_smear) + float(cand_filter_time)
@@ -309,24 +312,26 @@ zap_mode, nchan=0, nbin=0, length=0):
         " -cepoch start" + \
         " -q -Q"
 
-    logging.info("dspsr cmd: {0}".format(cmd))
+    log.info("dspsr cmd: {0}".format(cmd))
 
     # create a temporary working directory
     workdir = tempfile.mkdtemp()
-    logging.info("workdir: {0}".format(workdir))
+    log.info("workdir: {0}".format(workdir))
 
     args = shlex.split(cmd)
-    result = subprocess.check_output(args, stderr=subprocess.STDOUT,
-                                     encoding="ASCII", cwd=workdir)
+    result = subprocess.check_output(args,
+                                     stderr=subprocess.STDOUT,
+                                     encoding="ascii",
+                                     cwd=workdir)
 
     archive = result.split("seconds: ")[1]
     archive = archive.strip()
     archive = os.path.join(workdir, "{0}.ar".format(archive))
-    logging.debug(archive)
+    log.debug(archive)
 
     count = 10 
     while ((not os.path.exists(archive)) and count > 0):
-        logging.warn("Archive file does not exist: {0}".format(archive))
+        log.warn("Archive file does not exist: {0}".format(archive))
         sleep(1)
         count = count - 1
 
@@ -348,40 +353,42 @@ zap_mode, nchan=0, nbin=0, length=0):
     if not os.path.isfile(zap_file):
         raise RuntimeError("The zap file does not exist: {0}".format(zap_file))
 
-    info_str_l = r"Cand {0}\n{1}\n{2:.5f}".format(cand_nr,
-    os.path.basename(archive)[0:-3], cand_mjd)
-    logging.info(info_str_l)
+    info_str_l = r"Cand {0}\n{1}\n{2:.5f}".format(
+        cand_nr,
+        os.path.basename(archive)[0:-3],
+        cand_mjd
+        )
 
-    info_str_r = r"S/N {0:.1f}; DM {1:.1f}; w {2:.1f} ms\n{3}\n{4}".format(snr,
-    dm, cand_filter_time*1E3, os.path.basename(fil_file),
-    os.path.basename(cand_file))
-    logging.info(info_str_r)
+    log.info(info_str_l)
 
-    outfile = os.path.join(".",
-    "c{0:0>4}_{1}.png".format(cand_nr, os.path.basename(archive)[0:-3]))
+    info_str_r = r"S/N {0:.1f}; DM {1:.1f}; w {2:.1f} ms\n{3}\n{4}".format(
+        snr,
+        dm,
+        cand_filter_time * 1E3,
+        os.path.basename(fil_file),
+        os.path.basename(cand_file)
+        )
+
+    log.info(info_str_r)
+
+    outfile = os.path.join(
+        ".",
+        "c{0:0>4}_{1}.png".format(cand_nr, os.path.basename(archive)[0:-3])
+        )
 
     cmd = "psrplot -p freq+ -J {0} -j 'F {1:.0f}' -c above:l='{2}' -c above:c='' -c above:r='{3}' -c x:unit=ms -c y:reverse=1 -D {4}/PNG {5}".format(zap_file,
     nchan, info_str_l, info_str_r, outfile, archive)
 
-    logging.info("psrplot cmd: {0}".format(cmd))
+    log.info("psrplot cmd: {0}".format(cmd))
     args = shlex.split(cmd)
     subprocess.check_call(args)
 
     # clean up
     if os.path.exists(archive):
         os.remove(archive)
+
     os.rmdir(workdir)
 
-
-def signal_handler(signum, frame):
-    """
-    Handle UNIX signals sent to the programme.
-    """
-
-    # treat SIGINT/INT/CRTL-C
-    if signum == signal.SIGINT:
-        logging.warn("SIGINT received, stopping the program.")
-        sys.exit(1)
 
 #
 # MAIN
@@ -391,8 +398,8 @@ def main():
     # start signal handler
     signal.signal(signal.SIGINT, signal_handler)
 
-    # set up logging
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    setup_logging()
+    log = logging.getLogger('hdpipe.candviewer')
 
     # handle command line arguments
     parser = argparse.ArgumentParser(description="View heimdall candidates.")
@@ -411,11 +418,11 @@ def main():
     # sanity check
     for item in args.candfiles:
         if not os.path.isfile(item):
-            logging.error("The file does not exist: {0}".format(item))
+            log.error("The file does not exist: {0}".format(item))
             sys.exit(1)
 
     if not args.nchan >= 2:
-        logging.error("Nchan must be greater than 2: {0}".format(args.nchan))
+        log.error("Nchan must be greater than 2: {0}".format(args.nchan))
         sys.exit(1)
 
     candfiles = np.sort(args.candfiles)

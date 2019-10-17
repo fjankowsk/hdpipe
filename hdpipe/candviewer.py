@@ -399,7 +399,7 @@ zap_mode, nchan=0, nbin=0, length=0):
     if not os.path.isfile(zap_file):
         raise RuntimeError("The zap file does not exist: {0}".format(zap_file))
 
-    info_str_l = r"Cand {0}\n{1}\n{2:.5f}".format(
+    info_str_l = r"Cand {0}\n{1}\n{2:.5f}\n$coord".format(
         cand_nr,
         os.path.basename(archive)[0:-3],
         cand_mjd
@@ -422,8 +422,15 @@ zap_mode, nchan=0, nbin=0, length=0):
         "c{0:0>4}_{1}.png".format(cand_nr, os.path.basename(archive)[0:-3])
         )
 
-    cmd = "psrplot -p freq+ -J {0} -j 'F {1:.0f}' -c above:l='{2}' -c above:c='' -c above:r='{3}' -c x:unit=ms -c y:reverse=1 -D {4}/PNG {5}".format(zap_file,
-    nchan, info_str_l, info_str_r, outfile, archive)
+    cmd = """\
+psrplot -p freq+
+-J {0} -j 'F {1:.0f}'
+-c above:l='{2}'
+-c above:c=''
+-c above:r='{3}'
+-c x:unit=ms
+-c y:reverse=1
+-D {4}/PNG {5}""".format(zap_file, nchan, info_str_l, info_str_r, outfile, archive)
 
     log.info("psrplot cmd: {0}".format(cmd))
     args = shlex.split(cmd)

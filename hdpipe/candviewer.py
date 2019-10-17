@@ -93,7 +93,15 @@ def remove_bad_cands(t_data):
 
 def plot_candidates(t_data, filename, output_plots):
     """
-    Plot heimdall candidate output.
+    Plot candidate S/N versus DM.
+
+    Parameters
+    ----------
+    t_data: ~np.record
+    filename: str
+        The name of the candidate file.
+    output_plots: bool
+        Whether to output plots to file, rather than to the screen.
     """
 
     data = np.copy(t_data)
@@ -125,12 +133,12 @@ def plot_candidates(t_data, filename, output_plots):
     ax.grid()
     ax.set_xlabel("DM + 1 (pc/cm3)")
     ax.set_ylabel("S/N")
-    ax.set_title("{0}".format(filename))
+    ax.set_title("{0}".format(os.path.basename(filename)))
 
     fig.tight_layout()
 
     if output_plots:
-        fig.savefig("{0}.png".format(filename), bbox_inches="tight")
+        fig.savefig("{0}_snr_dm.png".format(filename), bbox_inches="tight")
 
         # close the figure in order not
         # to consume too much memory
@@ -139,7 +147,15 @@ def plot_candidates(t_data, filename, output_plots):
 
 def plot_clusters(t_data, filename, output_plots):
     """
-    Plot heimdall candidate output.
+    Plot candidate clusters.
+
+    Parameters
+    ----------
+    t_data: ~np.record
+    filename: str
+        The name of the candidate file.
+    output_plots: bool
+        Whether to output plots to file, rather than to the screen.
     """
 
     data = np.copy(t_data)
@@ -153,21 +169,44 @@ def plot_clusters(t_data, filename, output_plots):
     ax1.scatter(data["dm"], data["n_clusters"])
     ax1.grid(True)
     ax1.set_yscale("log")
+    ax1.set_xlabel('DM (pc/cm3)')
+    ax1.set_ylabel('#clusters')
 
     ax2 = fig.add_subplot(312)
     ax2.scatter(data["snr"], data["n_clusters"])
     ax2.grid(True)
     ax2.set_yscale("log")
+    ax2.set_xlabel('S/N')
+    ax2.set_ylabel('#clusters')
 
     ax3 = fig.add_subplot(313)
-    ax3.scatter(data["snr"], data["n_clusters"])
+    ax3.scatter(data["width"], data["n_clusters"])
     ax3.grid(True)
     ax3.set_yscale("log")
+    ax3.set_xlabel('Width')
+    ax3.set_ylabel('#clusters')
+
+    fig.tight_layout()
+
+    if output_plots:
+        fig.savefig("{0}_clusters.png".format(filename), bbox_inches="tight")
+
+        # close the figure in order not
+        # to consume too much memory
+        plt.close(fig)
 
 
 def plot_candidate_timeline(t_data, filename, output_plots):
     """
-    Plot heimdall candidate output as a timeline
+    Plot candidates as a timeline.
+
+    Parameters
+    ----------
+    t_data: ~np.record
+    filename: str
+        The name of the candidate file.
+    output_plots: bool
+        Whether to output plots to file, rather than to the screen.
     """
 
     data = np.copy(t_data)
@@ -196,10 +235,17 @@ def plot_candidate_timeline(t_data, filename, output_plots):
     ax.grid()
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("DM + 1 (pc/cm3)")
-    ax.set_title("{0}".format(filename))
+    ax.set_title("{0}".format(os.path.basename(filename)))
     ax.set_yscale("log")
 
     fig.tight_layout()
+
+    if output_plots:
+        fig.savefig("{0}_timeline.png".format(filename), bbox_inches="tight")
+
+        # close the figure in order not
+        # to consume too much memory
+        plt.close(fig)
 
 
 def get_zap_file(zap_mode):
@@ -440,16 +486,16 @@ def main():
 
         part = remove_bad_cands(part)
 
+        plot_clusters(part, item, args.output)
+        plot_candidates(part, item, args.output)
+        plot_candidate_timeline(part, item, args.output)
+
         if data is None:
             data = np.copy(part)
         else:
             data = np.concatenate((data, part))
 
         i += 1
-    
-    plot_clusters(data, item, args.output)
-    plot_candidates(data, item, args.output)
-    plot_candidate_timeline(data, item, args.output)
 
     # remove all low-snr candidates and the ones that are really wide
     good = remove_bad_cands(data)

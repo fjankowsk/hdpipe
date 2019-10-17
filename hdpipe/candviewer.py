@@ -180,10 +180,10 @@ def plot_clusters(t_data, filename, output_plots):
     ax2.set_ylabel('#clusters')
 
     ax3 = fig.add_subplot(313)
-    ax3.scatter(data["width"], data["n_clusters"])
+    ax3.scatter(data["filter"], data["n_clusters"])
     ax3.grid(True)
     ax3.set_yscale("log")
-    ax3.set_xlabel('Width')
+    ax3.set_xlabel('Filter number')
     ax3.set_ylabel('#clusters')
 
     fig.tight_layout()
@@ -482,7 +482,7 @@ def main():
 
         part["cand_file"] = item
         part["fil_file"] = "{0}.fil".format(item[0:-5])
-        part["total_time"] =  part["time"] + (i - 1)*60.0
+        part["total_time"] =  part["time"] + (i - 1) * 60.0
 
         part = remove_bad_cands(part)
 

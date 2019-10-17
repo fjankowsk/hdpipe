@@ -138,7 +138,7 @@ def plot_candidates(t_data, filename, output_plots):
     fig.tight_layout()
 
     if output_plots:
-        fig.savefig("{0}_snr_dm.png".format(filename), bbox_inches="tight")
+        fig.savefig("{0}_snr_dm.png".format(os.path.basename(filename)), bbox_inches="tight")
 
         # close the figure in order not
         # to consume too much memory
@@ -189,7 +189,7 @@ def plot_clusters(t_data, filename, output_plots):
     fig.tight_layout()
 
     if output_plots:
-        fig.savefig("{0}_clusters.png".format(filename), bbox_inches="tight")
+        fig.savefig("{0}_clusters.png".format(os.path.basename(filename)), bbox_inches="tight")
 
         # close the figure in order not
         # to consume too much memory
@@ -241,7 +241,7 @@ def plot_candidate_timeline(t_data, filename, output_plots):
     fig.tight_layout()
 
     if output_plots:
-        fig.savefig("{0}_timeline.png".format(filename), bbox_inches="tight")
+        fig.savefig("{0}_timeline.png".format(os.path.basename(filename)), bbox_inches="tight")
 
         # close the figure in order not
         # to consume too much memory

@@ -93,7 +93,10 @@ def run_heimdall(filename, gpu_id, zap_mode):
         with open(item, "r") as f:
             total += f.read()
 
-    outfile = "{0}.cand".format(filename[0:-4])
+    outfile = "{0}.cand".format(
+        os.path.splitext(filename)[0]
+        )
+
     with open(outfile, "w") as f:
         f.write(total)
 

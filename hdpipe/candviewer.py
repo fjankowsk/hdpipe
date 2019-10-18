@@ -261,19 +261,46 @@ def get_zap_file(zap_mode):
     -------
     zap_file : str
         Absolute filename of zap file to use.
+    
+    Raises
+    ------
+    RuntimeError
+        If zap file does not exist.
     """
+
+    zap_mask_dir = os.path.join(
+        os.path.dirname(__file__),
+        'zap_masks'
+    )
 
     if zap_mode == "None":
         # no zapping
-        zap_file = os.path.expanduser("~/freq_zap_masks/zap_none.psh")
+        zap_file = os.path.join(
+            zap_mask_dir,
+            'none.psh'
+        )
 
     elif zap_mode == "Lovell_20cm":
         # Lovell 20cm data
         # this works for 672 and 800 channel data
-        zap_file = os.path.expanduser("~/freq_zap_masks/zap_20cm.psh")
+        zap_file = os.path.join(
+            zap_mask_dir,
+            'Lovell_20cm.psh'
+        )
+
+    elif zap_mode == "Lovell_80cm":
+        # Lovell 80cm data
+        # currently untested
+        zap_file = os.path.join(
+            zap_mask_dir,
+            'Lovell_80cm.psh'
+        )
 
     else:
         RuntimeError("Zap mask mode unknown: {0}".format(zap_mode))
+
+    if not os.path.isfile(zap_file):
+        raise RuntimeError('The zap mask file does not exist: {0}'.format(zap_file))
 
     return zap_file
 
@@ -461,7 +488,7 @@ def main():
     parser.add_argument("-o", "--output", action="store_true", dest="output",
                         default=False, help="Output plots to file rather than to screen.")
     parser.add_argument("-z", "--zap_mode", dest="zap_mode", type=str,
-                        choices=["None", "Lovell_20cm"], default="None",
+                        choices=["None", "Lovell_20cm", "Lovell_80cm"], default="None",
                         help="Frequency zap mask mode to use (default: None).")
     parser.add_argument("-n", "--nchan", type=int, dest="nchan",
                         default=32, help="Scrunch to this many frequency channels (default: 32).")
@@ -522,7 +549,8 @@ def main():
         and os.path.isfile(item["fil_file"]):
             pass
         else:
-            raise RuntimeError("Cand or fil file do not exist: {0}, {1}".format(item["cand_file"], item["fil_file"]))
+            raise RuntimeError("Cand or fil file do not exist: {0}, {1}".format(item["cand_file"],
+                                                                                item["fil_file"]))
 
     cand_nr = 1
 

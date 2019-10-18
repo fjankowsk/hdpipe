@@ -295,6 +295,13 @@ def get_zap_file(zap_mode):
             zap_mask_dir,
             'Lovell_80cm.psh'
         )
+    
+    elif zap_mode == "MeerKAT_20cm":
+        # MeerKAT L-band 1024 channel data
+        zap_file = os.path.join(
+            zap_mask_dir,
+            'MeerKAT_20cm.psh'
+        )
 
     else:
         RuntimeError("Zap mask mode unknown: {0}".format(zap_mode))
@@ -488,7 +495,12 @@ def main():
     parser.add_argument("-o", "--output", action="store_true", dest="output",
                         default=False, help="Output plots to file rather than to screen.")
     parser.add_argument("-z", "--zap_mode", dest="zap_mode", type=str,
-                        choices=["None", "Lovell_20cm", "Lovell_80cm"], default="None",
+                        choices=[
+                            "None",
+                            "Lovell_20cm", "Lovell_80cm",
+                            "MeerKAT_20cm"
+                            ],
+                        default="None",
                         help="Frequency zap mask mode to use (default: None).")
     parser.add_argument("-n", "--nchan", type=int, dest="nchan",
                         default=32, help="Scrunch to this many frequency channels (default: 32).")

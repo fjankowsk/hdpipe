@@ -44,6 +44,15 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--dm_max",
+        dest="dm_max",
+        type=float,
+        default=5000,
+        metavar='dm',
+        help="Maximum DM to search out to."
+    )
+
+    parser.add_argument(
         "-g", "--gpu_id",
         dest="gpu_id",
         type=int,
@@ -109,18 +118,20 @@ def get_zap_str(zap_mode):
     return zap_str
 
 
-def run_heimdall(filename, gpu_id, zap_mode):
+def run_heimdall(filename, gpu_id, zap_mode, dm_max):
     """
     Run heimdall on a filterbank file.
 
     Parameters
     ----------
-    filename : str
+    filename: str
         Filenames of filterbank files to process.
-    gpu_id : int
+    gpu_id: int
         ID of GPU to use.
-    zap_mode : str
+    zap_mode: str
         Frequency zap mask to use.
+    dm_max: float
+        The maximum DM to search out to.
     """
 
     log = logging.getLogger('hdpipe.run_heimdall')
@@ -134,11 +145,12 @@ def run_heimdall(filename, gpu_id, zap_mode):
     tempdir = tempfile.mkdtemp()
     log.info("Temp dir: {0}".format(tempdir))
 
-    command = "heimdall -dm 0 5000 -dm_tol 1.05 -output_dir {0} {1} -gpu_id {2} -f {3}".format(
-        tempdir,
-        zap_str,
-        gpu_id,
-        filename
+    command = "heimdall -dm 0 {dm_max} -dm_tol 1.05 -output_dir {outdir} {zap_str} -gpu_id {gpu_id} -f {filename}".format(
+        outdir=tempdir,
+        zap_str=zap_str,
+        gpu_id=gpu_id,
+        filename=filename,
+        dm_max=dm_max
     )
 
     log.info("Heimdall command: {0}".format(command))
@@ -199,7 +211,7 @@ def main():
         print("Processing: {0}".format(item))
 
         try:
-            run_heimdall(item, args.gpu_id, args.zap_mode)
+            run_heimdall(item, args.gpu_id, args.zap_mode, args.dm_max)
         except Exception as e:
             log.error("Heimdall failed on file: {0}, {1}".format(
                 item,

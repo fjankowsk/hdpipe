@@ -101,7 +101,7 @@ def get_zap_str(zap_mode):
 
     elif zap_mode == "MeerKAT_20cm":
         # MeerKAT telescope 20cm data
-        zap_str = "-zap_chans 0 45 -zap_chans 76 78 -zap_chans 81 83 -zap_chans 93 94 -zap_chans 101 113 -zap_chans 127 226 -zap_chans 263 264 -zap_chans 348 350 -zap_chans 360 361 -zap_chans 369 384 -zap_chans 393 398 -zap_chans 482 483 -zap_chans 488 695 -zap_chans 697 709 -zap_chans 712 720 -zap_chans 722 768 -zap_chans 772 780 -zap_chans 782 785 -zap_chans 787 793 -zap_chans 801 804 -zap_chans 807 825 -zap_chans 836 853 -zap_chans 883 885 -zap_chans 892 942 -zap_chans 949 951 -zap_chans 958 976 -zap_chans 1023 1024"
+        zap_str = "-zap_chans 0 27 -zap_chans 82 124 -zap_chans 376 391 -zap_chans 413 519 -zap_chans 801 833 -zap_chans 841 845 -zap_chans 858 862 -zap_chans 874 879 -zap_chans 909 921 -zap_chans 1010 1023"
 
     else:
         RuntimeError("Zap mode does not exist: {0}".format(zap_mode))

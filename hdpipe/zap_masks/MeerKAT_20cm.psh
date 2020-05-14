@@ -1,30 +1,13 @@
 #!/bin/env psrsh
 # This is correct for MeerKAT telescope L-band 1024 channels data
 
-zap chan 0-45
-zap chan 76-78
-zap chan 81-83
-zap chan 93-94
-zap chan 101-113
-zap chan 127-226
-zap chan 263-264
-zap chan 348-350
-zap chan 360-361
-zap chan 369-384
-zap chan 393-398
-zap chan 482-483
-zap chan 488-695
-zap chan 697-709
-zap chan 712-720
-zap chan 722-768
-zap chan 772-780
-zap chan 782-785
-zap chan 787-793
-zap chan 801-804
-zap chan 807-825
-zap chan 836-853
-zap chan 883-885
-zap chan 892-947
-zap chan 949-951
-zap chan 958-976
-zap chan 1023-1024
+zap chan 0-27
+zap chan 82-124
+zap chan 376-391
+zap chan 413-519
+zap chan 801-833
+zap chan 841-845
+zap chan 858-862
+zap chan 874-879
+zap chan 909-921
+zap chan 1010-1023

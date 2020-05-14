@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 #   Run heimdall single-pulse detection pipeline.
-#   2018-2019 Fabian Jankowski
+#   2018 - 2020 Fabian Jankowski
 #
 
 import argparse
@@ -19,6 +19,61 @@ import numpy as np
 
 from hdpipe.general_helpers import (signal_handler, setup_logging)
 from hdpipe.version import __version__
+
+
+def parse_args():
+    """
+    Parse the commandline arguments.
+
+    Returns
+    -------
+    args: populated namespace
+        The commandline arguments.
+    """
+
+    parser = argparse.ArgumentParser(
+        description="Run heimdall on filterbank files.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+
+    parser.add_argument(
+        "files",
+        type=str,
+        nargs="+",
+        help="Filterbank files to process."
+    )
+
+    parser.add_argument(
+        "-g", "--gpu_id",
+        dest="gpu_id",
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help="ID of GPU to use."
+    )
+
+    parser.add_argument(
+        "-z", "--zap_mode",
+        dest="zap_mode",
+        type=str,
+        choices=[
+            "None",
+            "Lovell_20cm",
+            "MeerKAT_20cm"
+            ],
+        default="None",
+        help="Frequency zap mask mode to use."
+    )
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=__version__
+    )
+
+    args = parser.parse_args()
+
+    return args
 
 
 def get_zap_str(zap_mode):
@@ -79,7 +134,12 @@ def run_heimdall(filename, gpu_id, zap_mode):
     tempdir = tempfile.mkdtemp()
     log.info("Temp dir: {0}".format(tempdir))
 
-    command = "heimdall -dm 0 5000 -dm_tol 1.05 -output_dir {0} {1} -gpu_id {2} -f {3}".format(tempdir, zap_str, gpu_id, filename)
+    command = "heimdall -dm 0 5000 -dm_tol 1.05 -output_dir {0} {1} -gpu_id {2} -f {3}".format(
+        tempdir,
+        zap_str,
+        gpu_id,
+        filename
+    )
 
     log.info("Heimdall command: {0}".format(command))
 
@@ -118,23 +178,7 @@ def main():
     setup_logging()
     log = logging.getLogger('hdpipe.run_heimdall')
 
-    # handle command line arguments
-    parser = argparse.ArgumentParser(description="Run heimdall on filterbank files.")
-    parser.add_argument("files", type=str, nargs="+",
-                        help="Filterbank files to process.")
-    parser.add_argument("-g", "--gpu_id", dest="gpu_id", type=int,
-                        choices=[0, 1], default=0,
-                        help="ID of GPU to use.")
-    parser.add_argument("-z", "--zap_mode", dest="zap_mode", type=str,
-                        choices=[
-                            "None",
-                            "Lovell_20cm",
-                            "MeerKAT_20cm"
-                            ],
-                        default="None",
-                        help="Frequency zap mask mode to use (default: None).")
-    parser.add_argument("--version", action="version", version=__version__)
-    args = parser.parse_args()
+    args = parse_args()
 
     # sanity check
     for item in args.files:
@@ -157,8 +201,11 @@ def main():
         try:
             run_heimdall(item, args.gpu_id, args.zap_mode)
         except Exception as e:
-            log.warn("Heimdall failed on file: {0}, {1}".format(item,
-            str(e)))
+            log.error("Heimdall failed on file: {0}, {1}".format(
+                item,
+                str(e)
+                )
+            )
         else:
             i += 1
 
@@ -167,6 +214,5 @@ def main():
     print("All done.")
 
 
-# if run directly
 if __name__ == "__main__":
     main()

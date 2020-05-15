@@ -148,8 +148,11 @@ def remove_bad_cands(t_data):
     data = np.copy(t_data)
 
     # remove all low-snr candidates and the ones that are really wide
-    mask = (data["snr"] > 9.0) & (data["filter"] <= 8) & \
-           (data["dm"] > 100) & (data["n_clusters"] > 4)
+    mask = (data["snr"] > 7.0) & \
+           (data["filter"] <= 10) & \
+           (data["dm"] > 300) & \
+           (data["dm"] < 370) & \
+           (data["n_clusters"] > 4)
     data = data[mask]
 
     return data
@@ -425,7 +428,12 @@ zap_mode, nchan=0, nbin=0, length=0):
     # determine data parameters
     command = "header {0} -tsamp -tobs -tstart -nchans -foff -fch1".format(fil_file)
     args = shlex.split(command)
-    raw = subprocess.check_output(args, encoding="ascii")
+    try:
+        raw = subprocess.check_output(args, encoding="ascii")
+    except TypeError as e:
+        log.error('Could not run header command: {0}'.format(str(e)))
+        raw = subprocess.check_output(args)
+
     info = raw.split("\n")
 
     samp_time = float(info[0].strip()) * 1E-6
@@ -462,11 +470,18 @@ zap_mode, nchan=0, nbin=0, length=0):
         dm
     )
     args = shlex.split(command)
-    result = subprocess.check_output(
-        args,
-        stderr=subprocess.STDOUT,
-        encoding="ascii"
-    )
+    try:
+        result = subprocess.check_output(
+            args,
+            stderr=subprocess.STDOUT,
+            encoding="ascii"
+        )
+    except TypeError as e:
+        log.error('Could not run dmsmear command: {0}'.format(str(e)))
+        result = subprocess.check_output(
+            args,
+            stderr=subprocess.STDOUT
+        )
 
     cand_band_smear = float(result.strip())
     log.info("Candidate band smearing: {0}".format(cand_band_smear))
@@ -513,12 +528,20 @@ zap_mode, nchan=0, nbin=0, length=0):
     log.info("Workdir: {0}".format(workdir))
 
     args = shlex.split(command)
-    result = subprocess.check_output(
-        args,
-        stderr=subprocess.STDOUT,
-        encoding="ascii",
-        cwd=workdir
-    )
+    try:
+        result = subprocess.check_output(
+            args,
+            stderr=subprocess.STDOUT,
+            encoding="ascii",
+            cwd=workdir
+        )
+    except TypeError as e:
+        log.error('Could not run dspsr command: {0}'.format(str(e)))
+        result = subprocess.check_output(
+            args,
+            stderr=subprocess.STDOUT,
+            cwd=workdir
+        )
 
     archive = result.split("seconds: ")[1]
     archive = archive.strip()
@@ -636,11 +659,11 @@ def main():
         # XXX: do not hardcode time here
         part["total_time"] =  part["time"] + (icand - 1) * 60.0
 
-        part = remove_bad_cands(part)
+        #part = remove_bad_cands(part)
 
-        plot_clusters(part, item, args.output)
-        plot_candidates(part, item, args.output)
-        plot_candidate_timeline(part, item, args.output)
+        # plot_clusters(part, item, args.output)
+        # plot_candidates(part, item, args.output)
+        # plot_candidate_timeline(part, item, args.output)
 
         if data is None:
             data = np.copy(part)

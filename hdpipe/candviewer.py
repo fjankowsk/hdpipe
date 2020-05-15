@@ -428,8 +428,7 @@ zap_mode, nchan=0, nbin=0, length=0):
     raw = subprocess.check_output(args, encoding="ascii")
     info = raw.split("\n")
 
-    samp_time = float(info[0].strip())
-    samp_time *= 1E-6
+    samp_time = float(info[0].strip()) * 1E-6
     tobs = float(info[1].strip())
     tstart = float(info[2].strip())
     rec_nchan = int(info[3].strip())
@@ -470,7 +469,7 @@ zap_mode, nchan=0, nbin=0, length=0):
     )
 
     cand_band_smear = float(result.strip())
-    log.info("cand_band_smear: {0}".format(cand_band_smear))
+    log.info("Candidate band smearing: {0}".format(cand_band_smear))
 
     cand_filter_time = (2 ** filter) * samp_time
     log.info("Filter, cand_filter_time: {0}, {1}".format(
@@ -497,16 +496,17 @@ zap_mode, nchan=0, nbin=0, length=0):
     if nbin > 1024:
         nbin = 1024
 
-    command = "dspsr " + fil_file + " -S " + str(cand_start_time) + \
-        " -b " + str(nbin) + \
-        " -T " + str(cand_tot_time) + \
-        " -c " + str(cand_tot_time) + \
-        " -D " + str(dm) + \
-        " -U 1" + \
-        " -cepoch start" + \
-        " -q -Q"
+    # construct dspsr command
+    command = "dspsr {fil_file} -S {cand_start_time} -b {nbin} -T {cand_tot_time} -c {cand_tot_time} -D {dm}".format(
+        fil_file=fil_file,
+        cand_start_time=cand_start_time,
+        nbin=nbin,
+        cand_tot_time=cand_tot_time,
+        dm=dm
+    )
+    command += " -U 1 -cepoch start -q -Q"
 
-    log.info("dspsr cmd: {0}".format(command))
+    log.info("Dspsr command: {0}".format(command))
 
     # create a temporary working directory
     workdir = tempfile.mkdtemp()
@@ -549,47 +549,47 @@ zap_mode, nchan=0, nbin=0, length=0):
     if not os.path.isfile(zap_file):
         raise RuntimeError("The zap file does not exist: {0}".format(zap_file))
 
-    info_str_l = r"Cand {0}\n{1}\n{2:.5f}\n$coord".format(
-        cand_nr,
-        os.path.basename(archive)[0:-3],
-        cand_mjd
-        )
+    info_str_l = r"Cand {cand_nr}\n{file}\n{mjd:.5f}\n$coord".format(
+        cand_nr=cand_nr,
+        file=os.path.basename(archive)[0:-3],
+        mjd=cand_mjd
+    )
 
     log.info(info_str_l)
 
-    info_str_r = r"S/N {0:.1f}; DM {1:.1f}; w {2:.1f} ms\n{3}\n{4}".format(
-        snr,
-        dm,
-        cand_filter_time * 1E3,
-        os.path.basename(fil_file),
-        os.path.basename(cand_file)
-        )
+    info_str_r = r"S/N {snr:.1f}; DM {dm:.1f}; w {width:.1f} ms\n{fil_file}\n{cand_file}".format(
+        snr=snr,
+        dm=dm,
+        width=cand_filter_time * 1E3,
+        fil_file=os.path.basename(fil_file),
+        cand_file=os.path.basename(cand_file)
+    )
 
     log.info(info_str_r)
 
     outfile = os.path.join(
         ".",
         "c{0:0>4}_{1}.png".format(cand_nr, os.path.basename(archive)[0:-3])
-        )
+    )
 
     command = """\
 psrplot -p freq+
--J {0} -j 'F {1:.0f}'
--c above:l='{2}'
+-J {zap_file} -j 'F {nchan:.0f}'
+-c above:l='{info_str_l}'
 -c above:c=''
--c above:r='{3}'
+-c above:r='{info_str_r}'
 -c x:unit=ms
 -c y:reverse=1
--D {4}/PNG {5}""".format(
-    zap_file,
-    nchan,
-    info_str_l,
-    info_str_r,
-    outfile,
-    archive
+-D {outfile}/PNG {archive}""".format(
+    zap_file=zap_file,
+    nchan=nchan,
+    info_str_l=info_str_l,
+    info_str_r=info_str_r,
+    outfile=outfile,
+    archive=archive
     )
 
-    log.info("Psrplot cmd: {0}".format(command))
+    log.info("Psrplot command: {0}".format(command))
     args = shlex.split(command)
     subprocess.check_call(args)
 

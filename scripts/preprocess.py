@@ -73,7 +73,7 @@ def integrate_psrfits():
 
 def convert_to_filterbank():
     """
-    Convert the psrfits data to filterbank.
+    Convert the psrfits data to sigproc filterbank files.
     """
 
     files = glob.glob(

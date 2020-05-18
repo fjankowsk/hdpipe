@@ -14,6 +14,7 @@ import subprocess
 import sys
 import tempfile
 from time import sleep
+import sys
 
 import numpy as np
 
@@ -154,6 +155,7 @@ def run_heimdall(filename, gpu_id, zap_mode, dm_max):
     )
 
     log.info("Heimdall command: {0}".format(command))
+    sys.stdout.flush()
 
     args = shlex.split(command)
     subprocess.check_call(args)
@@ -167,7 +169,7 @@ def run_heimdall(filename, gpu_id, zap_mode, dm_max):
 
     outfile = "{0}.cand".format(
         os.path.splitext(filename)[0]
-        )
+    )
 
     with open(outfile, "w") as f:
         f.write(total)
@@ -203,12 +205,14 @@ def main():
     print("Number of files to process: {0}".format(len(files)))
     print("Using GPU: {0}".format(args.gpu_id))
     print("Zap mode: {0}".format(args.zap_mode))
+    sys.stdout.flush()
     sleep(3)
 
     i = 0
 
     for item in files:
         print("Processing: {0}".format(item))
+        sys.stdout.flush()
 
         try:
             run_heimdall(item, args.gpu_id, args.zap_mode, args.dm_max)

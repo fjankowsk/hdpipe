@@ -36,7 +36,7 @@ def integrate_psrfits():
         print('Number of files: {0}'.format(len(files)))
 
         # process in bunches
-        step = 10
+        step = 30
         nbatch = int(np.ceil(len(files) / float(step)))
 
         for ibatch in range(nbatch):

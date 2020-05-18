@@ -7,6 +7,7 @@ import glob
 import os.path
 import shlex
 import subprocess32 as subprocess
+import sys
 
 import numpy as np
 
@@ -24,6 +25,7 @@ def integrate_psrfits():
     dirs = sorted(dirs)
 
     print('Number of directories: {0}'.format(len(dirs)))
+    sys.stdout.flush()
 
     for dir in dirs:
         print('Processing directory: {0}'.format(dir))
@@ -34,6 +36,7 @@ def integrate_psrfits():
         files = sorted(files)
 
         print('Number of files: {0}'.format(len(files)))
+        sys.stdout.flush()
 
         # process in bunches
         step = 30
@@ -55,6 +58,7 @@ def integrate_psrfits():
             )
             outfile = os.path.abspath(outfile)
             print('Output file: {0}'.format(outfile))
+            sys.stdout.flush()
 
             command = 'pfitsUtil_searchmode_combineTime -o {outfile} {filestr}'.format(
                 outfile=outfile,
@@ -64,6 +68,7 @@ def integrate_psrfits():
             args = shlex.split(command)
 
             subprocess.check_call(args)
+            sys.stdout.flush()
 
 
 def convert_to_filterbank():

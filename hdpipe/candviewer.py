@@ -150,9 +150,9 @@ def remove_bad_cands(t_data):
     # remove all low-snr candidates and the ones that are really wide
     mask = (data["snr"] > 7.0) & \
            (data["filter"] <= 10) & \
-           (data["dm"] > 300) & \
-           (data["dm"] < 370) & \
-           (data["n_clusters"] > 4)
+           (data["dm"] > 320) & \
+           (data["dm"] < 350) & \
+           (data["n_clusters"] > 5)
     data = data[mask]
 
     return data
@@ -512,7 +512,7 @@ zap_mode, nchan=0, nbin=0, length=0):
         nbin = 1024
 
     # construct dspsr command
-    command = "dspsr {fil_file} -S {cand_start_time} -b {nbin} -T {cand_tot_time} -c {cand_tot_time} -D {dm}".format(
+    command = "dspsr -k MEERKAT {fil_file} -S {cand_start_time} -b {nbin} -T {cand_tot_time} -c {cand_tot_time} -D {dm}".format(
         fil_file=fil_file,
         cand_start_time=cand_start_time,
         nbin=nbin,
@@ -659,7 +659,7 @@ def main():
         # XXX: do not hardcode time here
         part["total_time"] =  part["time"] + (icand - 1) * 60.0
 
-        #part = remove_bad_cands(part)
+        # part = remove_bad_cands(part)
 
         # plot_clusters(part, item, args.output)
         # plot_candidates(part, item, args.output)
@@ -713,6 +713,8 @@ def main():
             print("An error occurred: {0}".format(str(e)))
 
         cand_nr += 1
+
+    print('Plotted dynamic spectra: {0}'.format(cand_nr))
 
     print("All done.")
 

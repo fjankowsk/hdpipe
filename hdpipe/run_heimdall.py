@@ -18,7 +18,7 @@ import sys
 
 import numpy as np
 
-from hdpipe.general_helpers import (signal_handler, setup_logging)
+from hdpipe.general_helpers import signal_handler, setup_logging
 from hdpipe.version import __version__
 
 
@@ -34,14 +34,11 @@ def parse_args():
 
     parser = argparse.ArgumentParser(
         description="Run heimdall on filterbank files.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
     parser.add_argument(
-        "files",
-        type=str,
-        nargs="+",
-        help="Filterbank files to process."
+        "files", type=str, nargs="+", help="Filterbank files to process."
     )
 
     parser.add_argument(
@@ -49,37 +46,31 @@ def parse_args():
         dest="dm_max",
         type=float,
         default=5000,
-        metavar='dm',
-        help="Maximum DM to search out to."
+        metavar="dm",
+        help="Maximum DM to search out to.",
     )
 
     parser.add_argument(
-        "-g", "--gpu_id",
+        "-g",
+        "--gpu_id",
         dest="gpu_id",
         type=int,
         choices=[0, 1],
         default=0,
-        help="ID of GPU to use."
+        help="ID of GPU to use.",
     )
 
     parser.add_argument(
-        "-z", "--zap_mode",
+        "-z",
+        "--zap_mode",
         dest="zap_mode",
         type=str,
-        choices=[
-            "None",
-            "Lovell_20cm",
-            "MeerKAT_20cm"
-            ],
+        choices=["None", "Lovell_20cm", "MeerKAT_20cm"],
         default="None",
-        help="Frequency zap mask mode to use."
+        help="Frequency zap mask mode to use.",
     )
 
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=__version__
-    )
+    parser.add_argument("--version", action="version", version=__version__)
 
     args = parser.parse_args()
 
@@ -135,7 +126,7 @@ def run_heimdall(filename, gpu_id, zap_mode, dm_max):
         The maximum DM to search out to.
     """
 
-    log = logging.getLogger('hdpipe.run_heimdall')
+    log = logging.getLogger("hdpipe.run_heimdall")
 
     if not os.path.isfile(filename):
         raise RuntimeError("The file does not exist: {0}".format(filename))
@@ -147,11 +138,7 @@ def run_heimdall(filename, gpu_id, zap_mode, dm_max):
     log.info("Temp dir: {0}".format(tempdir))
 
     command = "heimdall -dm 0 {dm_max} -dm_tol 1.05 -output_dir {outdir} {zap_str} -gpu_id {gpu_id} -f {filename}".format(
-        outdir=tempdir,
-        zap_str=zap_str,
-        gpu_id=gpu_id,
-        filename=filename,
-        dm_max=dm_max
+        outdir=tempdir, zap_str=zap_str, gpu_id=gpu_id, filename=filename, dm_max=dm_max
     )
 
     log.info("Heimdall command: {0}".format(command))
@@ -167,9 +154,7 @@ def run_heimdall(filename, gpu_id, zap_mode, dm_max):
         with open(item, "r") as f:
             total += f.read()
 
-    outfile = "{0}.cand".format(
-        os.path.splitext(filename)[0]
-    )
+    outfile = "{0}.cand".format(os.path.splitext(filename)[0])
 
     with open(outfile, "w") as f:
         f.write(total)
@@ -185,12 +170,13 @@ def run_heimdall(filename, gpu_id, zap_mode, dm_max):
 # MAIN
 #
 
+
 def main():
     # start signal handler
     signal.signal(signal.SIGINT, signal_handler)
 
     setup_logging()
-    log = logging.getLogger('hdpipe.run_heimdall')
+    log = logging.getLogger("hdpipe.run_heimdall")
 
     args = parse_args()
 
@@ -217,11 +203,7 @@ def main():
         try:
             run_heimdall(item, args.gpu_id, args.zap_mode, args.dm_max)
         except Exception as e:
-            log.error("Heimdall failed on file: {0}, {1}".format(
-                item,
-                str(e)
-                )
-            )
+            log.error("Heimdall failed on file: {0}, {1}".format(item, str(e)))
         else:
             i += 1
 

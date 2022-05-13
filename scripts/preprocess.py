@@ -6,7 +6,7 @@
 import glob
 import os.path
 import shlex
-import subprocess32 as subprocess
+import subprocess
 import sys
 
 import numpy as np

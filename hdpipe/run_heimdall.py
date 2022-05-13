@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 #   Run heimdall single-pulse detection pipeline.
 #   2018 - 2020 Fabian Jankowski

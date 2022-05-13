@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import numpy as np
 from presto import psrfits
 from presto import filterbank

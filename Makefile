@@ -21,6 +21,6 @@ production:
 	${DCK} build \
 	--build-arg USERID=${USERID} \
 	--file ${DOCKERFILE} \
-	--tag heimdall_pipeline ${BASEDIR}
+	--tag hdpipe ${BASEDIR}
 
 .PHONY: help production

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 #   General helper functions.
 #   2019 Fabian Jankowski

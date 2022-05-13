@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 #   Visualize heimdall single-pulse candidates.
 #   2018 - 2020 Fabian Jankowski

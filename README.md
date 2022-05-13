@@ -1,6 +1,6 @@
 # Heimdall-based single-pulse search pipeline #
 
-This repository contains software to search for single pulses using the `heimdall` pipeline.
+This repository contains a pipeline to search for single pulses using the `heimdall` software.
 
 ## Author ##
 

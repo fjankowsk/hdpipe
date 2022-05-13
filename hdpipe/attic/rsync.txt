@@ -1,1 +1,0 @@
-rsync --files-from=list.txt -P -ave ssh jankowsk@psrgpu1:/mirror/streaming/processing/ .

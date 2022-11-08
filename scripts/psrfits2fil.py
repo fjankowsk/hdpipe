@@ -9,9 +9,9 @@ import time
 
 def translate_header(psrfits_file):
     fits_hdr = psrfits_file.header
-    subint_hdr = psrfits_file.fits['SUBINT'].header 
+    subint_hdr = psrfits_file.fits['SUBINT'].header
     subint_data = psrfits_file.fits['SUBINT'].data
-    fil_header = {} 
+    fil_header = {}
 
     if fits_hdr['TELESCOP'] in sigproc.telescope_ids:
         fil_header["telescope_id"] = \
@@ -26,7 +26,7 @@ def translate_header(psrfits_file):
 
     fil_header["data_type"] = 1 # filterbank
     fn = psrfits_file.filename
-    fil_header["rawdatafile"] = os.path.basename(fn) 
+    fil_header["rawdatafile"] = os.path.basename(fn)
     fil_header["source_name"] = fits_hdr['SRC_NAME']
     fil_header["barycentric"] = 0 # always not barycentered?
     fil_header["pulsarcentric"] = 0 # whats pulsarcentric?
@@ -50,13 +50,13 @@ def translate_header(psrfits_file):
     fil_header["nifs"] = subint_hdr['NPOL']
 
     return fil_header
-                         
+
 def main(fits_fn, outfn, nbits, \
             apply_weights, apply_scales, apply_offsets):
     start = time.time()
     psrfits_file = psrfits.PsrfitsFile(fits_fn)
 
-    fil_header = translate_header(psrfits_file) 
+    fil_header = translate_header(psrfits_file)
     fil_header['nbits'] = nbits
     outfil = filterbank.create_filterbank_file(outfn, fil_header, \
                                         nbits=nbits)
@@ -88,7 +88,7 @@ def main(fits_fn, outfn, nbits, \
             print "\tScaling data by",1/scale_fac
             print "\tValues larger than",new_max,"(pre-scaling) "\
                   "will be set to",2.0**nbits - 1,"\n"
-                  
+
         else:
             scale = False
             scale_fac = 1
@@ -103,14 +103,14 @@ def main(fits_fn, outfn, nbits, \
     sys.stdout.flush()
     oldpcnt = ""
     for isub in range(int(psrfits_file.nsubints)):
-	subint = psrfits_file.read_subint(isub, \
+        subint = psrfits_file.read_subint(isub, \
                     apply_weights, apply_scales, apply_offsets)
         if flip_band:
             subint = np.fliplr(subint)
-	subint /= scale_fac
-	outfil.append_spectra(subint)
-	pcnt = "%d" % (isub*100.0/psrfits_file.nsubints)
-	if pcnt != oldpcnt:
+        subint /= scale_fac
+        outfil.append_spectra(subint)
+        pcnt = "%d" % (isub*100.0/psrfits_file.nsubints)
+        if pcnt != oldpcnt:
             sys.stdout.write("% 4s%% complete\r" % pcnt)
             sys.stdout.flush()
 
@@ -128,7 +128,7 @@ if __name__=='__main__':
                       help="The number of bits in the output .fil file. " +\
                            "Default=8")
     parser.add_option("-o",dest='outfn',action='store',
-                      default=None, type='string',  
+                      default=None, type='string',
                       help="The filename of the output filterbank file. " +\
                            "Default: same as .fits input but with .fil extn")
     parser.add_option("--noweights", dest='apply_weights', \
@@ -141,7 +141,7 @@ if __name__=='__main__':
                       default=True, action="store_false", \
                       help="Do not apply offsets when converting data.")
     (options, args) = parser.parse_args()
-    
+
     fits_fn = args[0]
 
     if options.outfn:
